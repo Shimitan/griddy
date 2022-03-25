@@ -1,0 +1,128 @@
+options {
+    OUTPUT_DIRECTORY = "gen";
+    MULTI = true;
+    VISITOR = true;
+    LOOKAHEAD = 3;
+}
+
+PARSER_BEGIN(Griddy)
+
+public class Griddy {
+    public static void main(String args[]) {
+        Griddy parser = new Griddy(System.in);
+
+        try {
+            ASTStart n = parser.Start();
+            n.dump("");
+        } catch (Exception e) {
+            System.out.println("An error occurred.");
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+    }
+}
+PARSER_END(Griddy)
+
+/* Whitespace characters */
+SPECIAL_TOKEN : {
+        < WHITE_SPACE:  <TAB> | <SP>    >
+    |   < #TAB: "\t"    >
+    |   < #SP:  " "     >
+    |   < NEWLINE:  "\n" | "\r" | "\r\n"    >   // line endings
+}
+
+/* Reserved keywords */
+TOKEN : {
+        < IF:   "if"    >   // if statement
+    |   < ELSE: "else"  >   // else statement
+    |   < FROM: "from"  >   // get value 'from' board, e.g. '(x,y) from my_board'
+    |   < ON:   "on"    >   // value exist on board, e.g. 'game_piece on my_board'
+    |   < IN:   "in"    >   // e.g. 'for x in iterable'
+    |   < FOR:  "for"   >   // for loop begin
+    |   < WHILE:"while" >   // while loop begin
+    |   < GAME_SETUP:   "SETUP" >   // setup phase begin
+    |   < GAME_MAIN:    "GAME"  >   // game phase begin
+    |   < FUNC_DECL:    "fun"   >   // function declaration
+    |   < BOARD_DECL:   "board" >   // board declaration token, e.g. 'board (n,m)'
+}
+
+/* Punctuators */
+<DEFAULT, IN_REGEX>
+TOKEN : {
+        < EQ:   "=="    > : DEFAULT // equal
+    |   < NEQ:  "!="    > : DEFAULT // 'not equal'
+    |   < GEQ:  ">="    > : DEFAULT // 'greater than or equal to'
+    |   < LEQ:  "<="    > : DEFAULT // 'less than or equal to'
+    |   < NOT:  "!"     > : DEFAULT // 'not' / 'negate'
+    |   < LT:   "<"     > : DEFAULT // 'less than'
+    |   < GT:   ">"     > : DEFAULT // 'greater than'
+    |   < AND:  "&&"    > : DEFAULT // logical 'and'
+    |   < OR:   "||"    > : DEFAULT // logical 'or'
+    |   < PLUS: "+"     > : DEFAULT // addition
+    |   < MINUS:"-"     > : DEFAULT // subtraction
+    |   < MULT: "*"     > : DEFAULT // multiplication
+    |   < DIV:  "/"     > : DEFAULT // division
+    |   < MOD:  "%"     > : DEFAULT // modulus
+    |   < INCR:  "++"   > : DEFAULT // increment
+    |   < DECR:  "--"   > : DEFAULT // decrement
+    |   < ASSIGN: "="   > : DEFAULT // variable assigment
+    |   < PLUS_ASSIGN:  "+="    > : DEFAULT //
+    |   < MINUS_ASSIGN: "-="    > : DEFAULT // subtract and assign
+    |   < MULT_ASSIGN:  "*="    > : DEFAULT // multiply and assign
+    |   < DIV_ASSIGN:   "/="    > : DEFAULT
+    |   < DOT:      "." > : DEFAULT     // dot (struct property access maybe?)
+    |   < COMMA:    "," > : DEFAULT     // seperator comma
+    |   < SEMICOLON: ";"> : DEFAULT     // statement endings
+    |   < LPAREN:   "(" > : DEFAULT     // left parenthesis
+    |   < RPAREN:   ")" > : IN_REGEX    // right parenthesis
+    |   < LBRACE:   "{" > : DEFAULT     // left curly bracket
+    |   < RBRACE:   "}" > : IN_REGEX    // right curly bracket
+    |   < LBRACKET: "[" > : DEFAULT     // left square bracket
+    |   < RBRACKET: "]" > : IN_REGEX    // right square bracket
+    |   < LINECOMMENT_BEGIN:    "#" > : DEFAULT // one-line comment begin
+}
+
+/* Literals */
+<DEFAULT, IN_REGEX>
+TOKEN : {
+        < BOOL: "true" | "false"    > : IN_REGEX
+    |   < NULL: "empty" > : DEFAULT
+    |   < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])*  > : DEFAULT
+    |   < NEG_NUM:  "-" <NUM>   > : DEFAULT
+}
+
+/* Identifier */
+TOKEN : {
+        < IDENT:        <IDENT_PART> | <IDENT_PART> (<IDENT_PART>)* >
+    |   < #IDENT_PART:  (<LETTER> | "_")+ >
+    |   < #LETTER:      ["a"-"z","A"-"Z"] >
+}
+
+// TODO: Define string grammar.
+
+ASTStart Start() : {}
+{
+    setupPhase()
+    gamePhase()
+    <EOF>
+    { return jjtThis; }
+}
+
+void setupPhase() #Setup : {}
+{
+    <GAME_SETUP>
+    (
+        boardDeclaration()
+    )+
+}
+
+void gamePhase() #Game : {}
+{
+    <GAME_MAIN>
+    // TODO: Define game phase grammar.
+}
+
+void boardDeclaration() #void : {}
+{
+    <IDENT> <ASSIGN> <BOARD_DECL> <SEMICOLON>
+}
