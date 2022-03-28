@@ -1,0 +1,9 @@
+# example_1.griddy
+
+SETUP
+    my_board = board (8,8);
+    other_board = board (4,5);
+    some_variable = (( 2 + 4 )/9);
+
+GAME
+    (1 / (1));

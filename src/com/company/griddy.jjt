@@ -1,13 +1,13 @@
 options {
     OUTPUT_DIRECTORY = "gen";
     MULTI = true;
-    VISITOR = true;
-    LOOKAHEAD = 3;
 }
 
 PARSER_BEGIN(Griddy)
+import java.util.ArrayList;
 
 public class Griddy {
+
     public static void main(String args[]) {
         Griddy parser = new Griddy(System.in);
 
@@ -21,14 +21,20 @@ public class Griddy {
         }
     }
 }
+
 PARSER_END(Griddy)
 
 /* Whitespace characters */
 SPECIAL_TOKEN : {
-        < WHITE_SPACE:  <TAB> | <SP>    >
-    |   < #TAB: "\t"    >
-    |   < #SP:  " "     >
+        < WHITE_SPACE:  <TAB> | <NEWLINE> | <SP>    >
+    |   < #SP:   " "     >
+    |   < #TAB:  "\t"    >
     |   < NEWLINE:  "\n" | "\r" | "\r\n"    >   // line endings
+}
+
+/* Comments */
+SPECIAL_TOKEN : {
+        <SINGLE_LINE_COMMENT:   "#" (~["\n","\r"])* <NEWLINE>   >
 }
 
 /* Reserved keywords */
@@ -79,7 +85,6 @@ TOKEN : {
     |   < RBRACE:   "}" > : IN_REGEX    // right curly bracket
     |   < LBRACKET: "[" > : DEFAULT     // left square bracket
     |   < RBRACKET: "]" > : IN_REGEX    // right square bracket
-    |   < LINECOMMENT_BEGIN:    "#" > : DEFAULT // one-line comment begin
 }
 
 /* Literals */
@@ -111,18 +116,68 @@ ASTStart Start() : {}
 void setupPhase() #Setup : {}
 {
     <GAME_SETUP>
-    (
-        boardDeclaration()
-    )+
+    (setupStmt())*
+}
+
+void setupStmt() #void : {}
+{
+    assignment()
 }
 
 void gamePhase() #Game : {}
 {
     <GAME_MAIN>
     // TODO: Define game phase grammar.
+    (expression() <SEMICOLON>)*
 }
 
-void boardDeclaration() #void : {}
+void boardDeclaration() #Board :
 {
-    <IDENT> <ASSIGN> <BOARD_DECL> <SEMICOLON>
+    Token a, b;
+    ArrayList<Integer> boardSize = new ArrayList<Integer>();
+}
+{
+    <BOARD_DECL> <LPAREN> a=<NUM> <COMMA> b=<NUM> <RPAREN>
+    {
+        boardSize.add(Integer.parseInt(a.image));
+        boardSize.add(Integer.parseInt(b.image));
+        jjtThis.jjtSetValue(boardSize);
+    }
+}
+
+void assignment() #Assign : {}
+{
+    identifier() <ASSIGN> (boardDeclaration() | expression()) <SEMICOLON>
+}
+
+void identifier() #Ident : {
+    Token t;
+}
+{
+    t=<IDENT>
+    { jjtThis.jjtSetValue(t.image); }
+}
+
+void expression() #Expr : {}
+{
+    additiveExpression()
+}
+
+void additiveExpression() #void : {}
+{
+    (
+        multiplicativeExpression() ((<PLUS> | <MINUS>) multiplicativeExpression() )*
+    ) #Add(>1)
+}
+
+void multiplicativeExpression() #void : {}
+{
+    (
+        unary() ((<MULT> | <DIV> | <MOD>) unary())*
+    ) #Mult(>1)
+}
+
+void unary() #void : {}
+{
+    <LPAREN> expression() <RPAREN> | <IDENT> | <NUM>
 }
