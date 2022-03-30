@@ -1,9 +1,14 @@
 options {
-    OUTPUT_DIRECTORY = "gen";
+    OUTPUT_DIRECTORY = "src/com/company";
     MULTI = true;
+    NODE_PACKAGE = "com.company.parser";
+    JJTREE_OUTPUT_DIRECTORY = "src/com/company/parser";
+    VISITOR = true;
 }
 
 PARSER_BEGIN(Griddy)
+package com.company;
+
 import java.util.ArrayList;
 
 public class Griddy {
@@ -179,5 +184,17 @@ void multiplicativeExpression() #void : {}
 
 void unary() #void : {}
 {
-    <LPAREN> expression() <RPAREN> | <IDENT> | <NUM>
+    <LPAREN> expression() <RPAREN> | <IDENT> | number()
+}
+
+ASTInteger number() #Integer :
+{
+    Token t;
+}
+{
+    t=<NUM>
+    {
+        jjtThis.setValue(Integer.parseInt(t.image));
+        return jjtThis;
+    }
 }
