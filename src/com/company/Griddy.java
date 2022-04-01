@@ -185,10 +185,6 @@ if (jjtc000) {
         expression();
         break;
         }
-      case STRING:{
-        stringLiteral();
-        break;
-        }
       default:
         jj_la1[2] = jj_gen;
         jj_consume_token(-1);
@@ -415,24 +411,6 @@ if (jjtc000) {
     throw new Error("Missing return statement in function");
 }
 
-  static final public ASTString stringLiteral() throws ParseException {/*@bgen(jjtree) String */
-    ASTString jjtn000 = new ASTString(JJTSTRING);
-    boolean jjtc000 = true;
-    jjtree.openNodeScope(jjtn000);Token t;
-    try {
-      t = jj_consume_token(STRING);
-jjtree.closeNodeScope(jjtn000, true);
-      jjtc000 = false;
-jjtn000.jjtSetValue(t.image.substring(1, t.image.length()-1));
-        {if ("" != null) return jjtn000;}
-    } finally {
-if (jjtc000) {
-        jjtree.closeNodeScope(jjtn000, true);
-      }
-    }
-    throw new Error("Missing return statement in function");
-}
-
   static private boolean jj_initialized_once = false;
   /** Generated Token Manager. */
   static public GriddyTokenManager token_source;
@@ -454,7 +432,7 @@ if (jjtc000) {
 	   jj_la1_0 = new int[] {0x0,0x0,0x10000,0xc000000,0xc000000,0x70000000,0x70000000,0x0,};
 	}
 	private static void jj_la1_init_1() {
-	   jj_la1_1 = new int[] {0x100000,0x120200,0x1a0200,0x0,0x0,0x0,0x0,0x120200,};
+	   jj_la1_1 = new int[] {0x80000,0xa0200,0xa0200,0x0,0x0,0x0,0x0,0xa0200,};
 	}
 
   /** Constructor with InputStream. */
@@ -603,7 +581,7 @@ if (jjtc000) {
   /** Generate ParseException. */
   static public ParseException generateParseException() {
 	 jj_expentries.clear();
-	 boolean[] la1tokens = new boolean[55];
+	 boolean[] la1tokens = new boolean[54];
 	 if (jj_kind >= 0) {
 	   la1tokens[jj_kind] = true;
 	   jj_kind = -1;
@@ -620,7 +598,7 @@ if (jjtc000) {
 		 }
 	   }
 	 }
-	 for (int i = 0; i < 55; i++) {
+	 for (int i = 0; i < 54; i++) {
 	   if (la1tokens[i]) {
 		 jj_expentry = new int[1];
 		 jj_expentry[0] = i;

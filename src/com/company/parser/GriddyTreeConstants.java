@@ -16,7 +16,6 @@ public interface GriddyTreeConstants
   public int JJTADD = 8;
   public int JJTMULT = 9;
   public int JJTINTEGER = 10;
-  public int JJTSTRING = 11;
 
 
   public String[] jjtNodeName = {
@@ -31,7 +30,6 @@ public interface GriddyTreeConstants
     "Add",
     "Mult",
     "Integer",
-    "String",
   };
 }
-/* JavaCC - OriginalChecksum=97cf8308be0471f6bc8f7d7a05f84a96 (do not edit this line) */
+/* JavaCC - OriginalChecksum=30ad391af5e4b5fe8469a3a185ea0c0f (do not edit this line) */
