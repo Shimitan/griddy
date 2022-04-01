@@ -30,7 +30,7 @@ public class Griddy {
 PARSER_END(Griddy)
 
 /* Whitespace characters */
-SKIP : {
+SPECIAL_TOKEN : {
         < WHITE_SPACE:  <TAB> | <NEWLINE> | <SP>    >
     |   < #SP:   " "     >
     |   < #TAB:  "\t"    >
@@ -77,12 +77,12 @@ TOKEN : {
     |   < INCR:  "++"   > : DEFAULT // increment
     |   < DECR:  "--"   > : DEFAULT // decrement
     |   < ASSIGN: "="   > : DEFAULT // variable assigment
-    |   < PLUS_ASSIGN:  "+="    > : DEFAULT // add and assign
+    |   < PLUS_ASSIGN:  "+="    > : DEFAULT //
     |   < MINUS_ASSIGN: "-="    > : DEFAULT // subtract and assign
     |   < MULT_ASSIGN:  "*="    > : DEFAULT // multiply and assign
-    |   < DIV_ASSIGN:   "/="    > : DEFAULT // divide and assign
+    |   < DIV_ASSIGN:   "/="    > : DEFAULT
     |   < DOT:      "." > : DEFAULT     // dot (struct property access maybe?)
-    |   < COMMA:    "," > : DEFAULT     // separator comma
+    |   < COMMA:    "," > : DEFAULT     // seperator comma
     |   < SEMICOLON: ";"> : DEFAULT     // statement endings
     |   < LPAREN:   "(" > : DEFAULT     // left parenthesis
     |   < RPAREN:   ")" > : IN_REGEX    // right parenthesis
