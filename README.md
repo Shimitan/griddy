@@ -2,6 +2,11 @@
 
 A programming language for board games.
 
+## Requirements
+
+- JDK 17 (Java Development Kit)
+- JRE (Java Runtime Environment)
+
 ## Usage
 
 *Generate, compile, and run parser:*
