@@ -5,6 +5,7 @@
                                         
                                                        
                    
+    UNICODE_INPUT = true;
 }
 
 PARSER_BEGIN(Griddy)
@@ -105,6 +106,7 @@ TOKEN : {
     |   < NULL: "empty" > : DEFAULT
     |   < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])*  > : DEFAULT
     |   < NEG_NUM:  "-" <NUM>   > : DEFAULT
+    |   < STRING:   "\"" (~["\"","\r","\n"])* "\"" > : DEFAULT // string literal
 }
 
 /* Identifier */
@@ -264,7 +266,7 @@ void assignment()         : {/*@bgen(jjtree) Assign */
 {/*@bgen(jjtree) Assign */
     try {
 /*@egen*/
-    identifier() <ASSIGN> (boardDeclaration() | expression()) <SEMICOLON>/*@bgen(jjtree)*/
+    identifier() <ASSIGN> (boardDeclaration() | expression() | stringLiteral())<SEMICOLON>/*@bgen(jjtree)*/
     } catch (Throwable jjte000) {
       if (jjtc000) {
         jjtree.clearNodeScope(jjtn000);
@@ -435,6 +437,35 @@ ASTInteger number()          :
 /*@egen*/
     {
         jjtn000.setValue(Integer.parseInt(t.image));
+        return jjtn000;
+    }/*@bgen(jjtree)*/
+    } finally {
+      if (jjtc000) {
+        jjtree.closeNodeScope(jjtn000, true);
+      }
+    }
+/*@egen*/
+}
+
+ASTString stringLiteral()         :
+{/*@bgen(jjtree) String */
+    ASTString jjtn000 = new ASTString(JJTSTRING);
+    boolean jjtc000 = true;
+    jjtree.openNodeScope(jjtn000);
+/*@egen*/
+    Token t;
+}
+{/*@bgen(jjtree) String */
+    try {
+/*@egen*/
+    t=<STRING>/*@bgen(jjtree)*/
+    {
+      jjtree.closeNodeScope(jjtn000, true);
+      jjtc000 = false;
+    }
+/*@egen*/
+    {
+        jjtn000.jjtSetValue(t.image.substring(1, t.image.length()-1));
         return jjtn000;
     }/*@bgen(jjtree)*/
     } finally {

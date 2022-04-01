@@ -99,6 +99,7 @@ TOKEN : {
     |   < NULL: "empty" > : DEFAULT
     |   < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])*  > : DEFAULT
     |   < NEG_NUM:  "-" <NUM>   > : DEFAULT
+    |   < STRING:   "\"" (~["\"","\r","\n"])* "\"" > : DEFAULT // string literal
 }
 
 /* Identifier */
@@ -152,7 +153,7 @@ void boardDeclaration() #Board :
 
 void assignment() #Assign : {}
 {
-    identifier() <ASSIGN> (boardDeclaration() | expression()) <SEMICOLON>
+    identifier() <ASSIGN> (boardDeclaration() | expression() | stringLiteral())<SEMICOLON>
 }
 
 void identifier() #Ident : {
@@ -195,6 +196,18 @@ ASTInteger number() #Integer :
     t=<NUM>
     {
         jjtThis.setValue(Integer.parseInt(t.image));
+        return jjtThis;
+    }
+}
+
+ASTString stringLiteral() #String :
+{
+    Token t;
+}
+{
+    t=<STRING>
+    {
+        jjtThis.jjtSetValue(t.image.substring(1, t.image.length()-1));
         return jjtThis;
     }
 }
