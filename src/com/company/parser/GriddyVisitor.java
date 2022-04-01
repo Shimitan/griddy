@@ -16,5 +16,6 @@ public interface GriddyVisitor
   public Object visit(ASTAdd node, Object data);
   public Object visit(ASTMult node, Object data);
   public Object visit(ASTInteger node, Object data);
+  public Object visit(ASTString node, Object data);
 }
-/* JavaCC - OriginalChecksum=7b6b633fd2c9e412aef15e84ddf76aa8 (do not edit this line) */
+/* JavaCC - OriginalChecksum=ea680bcedf2d342462d5f4164e73ccda (do not edit this line) */

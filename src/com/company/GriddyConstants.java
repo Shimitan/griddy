@@ -111,11 +111,13 @@ public interface GriddyConstants {
   /** RegularExpression Id. */
   int NEG_NUM = 50;
   /** RegularExpression Id. */
-  int IDENT = 51;
+  int STRING = 51;
   /** RegularExpression Id. */
-  int IDENT_PART = 52;
+  int IDENT = 52;
   /** RegularExpression Id. */
-  int LETTER = 53;
+  int IDENT_PART = 53;
+  /** RegularExpression Id. */
+  int LETTER = 54;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -175,6 +177,7 @@ public interface GriddyConstants {
     "\"empty\"",
     "<NUM>",
     "<NEG_NUM>",
+    "<STRING>",
     "<IDENT>",
     "<IDENT_PART>",
     "<LETTER>",
