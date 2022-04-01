@@ -36,7 +36,7 @@ public class Griddy/*@bgen(jjtree)*/implements GriddyTreeConstants/*@egen*/ {/*@
 PARSER_END(Griddy)
 
 /* Whitespace characters */
-SPECIAL_TOKEN : {
+SKIP : {
         < WHITE_SPACE:  <TAB> | <NEWLINE> | <SP>    >
     |   < #SP:   " "     >
     |   < #TAB:  "\t"    >
@@ -83,12 +83,12 @@ TOKEN : {
     |   < INCR:  "++"   > : DEFAULT // increment
     |   < DECR:  "--"   > : DEFAULT // decrement
     |   < ASSIGN: "="   > : DEFAULT // variable assigment
-    |   < PLUS_ASSIGN:  "+="    > : DEFAULT //
+    |   < PLUS_ASSIGN:  "+="    > : DEFAULT // add and assign
     |   < MINUS_ASSIGN: "-="    > : DEFAULT // subtract and assign
     |   < MULT_ASSIGN:  "*="    > : DEFAULT // multiply and assign
-    |   < DIV_ASSIGN:   "/="    > : DEFAULT
+    |   < DIV_ASSIGN:   "/="    > : DEFAULT // divide and assign
     |   < DOT:      "." > : DEFAULT     // dot (struct property access maybe?)
-    |   < COMMA:    "," > : DEFAULT     // seperator comma
+    |   < COMMA:    "," > : DEFAULT     // separator comma
     |   < SEMICOLON: ";"> : DEFAULT     // statement endings
     |   < LPAREN:   "(" > : DEFAULT     // left parenthesis
     |   < RPAREN:   ")" > : IN_REGEX    // right parenthesis
