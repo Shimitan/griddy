@@ -14,9 +14,15 @@ public interface GriddyTreeConstants
   public int JJTIDENT = 6;
   public int JJTEXPR = 7;
   public int JJTADD = 8;
-  public int JJTMULT = 9;
-  public int JJTINTEGER = 10;
-  public int JJTSTRING = 11;
+  public int JJTPLUS = 9;
+  public int JJTMINUS = 10;
+  public int JJTMULT = 11;
+  public int JJTTIMES = 12;
+  public int JJTDIVIDE = 13;
+  public int JJTMOD = 14;
+  public int JJTINTEGER = 15;
+  public int JJTSTRING = 16;
+  public int JJTECHO = 17;
 
 
   public String[] jjtNodeName = {
@@ -29,9 +35,15 @@ public interface GriddyTreeConstants
     "Ident",
     "Expr",
     "Add",
+    "Plus",
+    "Minus",
     "Mult",
+    "Times",
+    "Divide",
+    "Mod",
     "Integer",
     "String",
+    "Echo",
   };
 }
-/* JavaCC - OriginalChecksum=97cf8308be0471f6bc8f7d7a05f84a96 (do not edit this line) */
+/* JavaCC - OriginalChecksum=fab9702cede93dfa0466d6cbcdc4b5db (do not edit this line) */

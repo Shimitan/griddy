@@ -3,8 +3,10 @@
 SETUP
     my_board = board (8,8);
     other_board = board (4,5);
-    some_variable = (( 2 + 4 )/9);
+    some_variable = (( 2 +4 )/9);
     some_other_variable = "hello world!";
 
 GAME
     (1 / (1));
+    echo helloe;
+    1;
