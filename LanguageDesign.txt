@@ -1,0 +1,4 @@
+Board -> 2D array, boundary checker?
+
+piece -> struct
+
