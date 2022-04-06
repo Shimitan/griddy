@@ -104,7 +104,7 @@ TOKEN : {
 
 /* Identifier */
 TOKEN : {
-        < IDENT:        <IDENT_PART> | <IDENT_PART> (<IDENT_PART>)* >
+        < IDENT:        <IDENT_PART> (<IDENT_PART>)* >
     |   < #IDENT_PART:  (<LETTER> | "_")+ >
     |   < #LETTER:      ["a"-"z","A"-"Z"] >
 }
