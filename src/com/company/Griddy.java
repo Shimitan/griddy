@@ -14,6 +14,8 @@ public class Griddy/*@bgen(jjtree)*/implements GriddyTreeConstants, GriddyConsta
         try {
             ASTStart n = parser.Start();
             n.dump("");
+            Visitor v = new Visitor();
+            n.jjtAccept(v, "");
         } catch (Exception e) {
             System.out.println("An error occurred.");
             System.out.println(e.getMessage());
@@ -108,7 +110,9 @@ if (jjtc000) {
       jj_consume_token(GAME_MAIN);
       label_2:
       while (true) {
+        gameStmt();
         switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+        case ECHO:
         case LPAREN:
         case NUM:
         case IDENT:{
@@ -119,8 +123,6 @@ if (jjtc000) {
           jj_la1[1] = jj_gen;
           break label_2;
         }
-        expression();
-        jj_consume_token(SEMICOLON);
       }
     } catch (Throwable jjte000) {
 if (jjtc000) {
@@ -140,6 +142,29 @@ if (jjtc000) {
 if (jjtc000) {
         jjtree.closeNodeScope(jjtn000, true);
       }
+    }
+}
+
+  static final public void gameStmt() throws ParseException {
+    switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+    case IDENT:{
+      assignment();
+      break;
+      }
+    case ECHO:{
+      echoStmt();
+      break;
+      }
+    case LPAREN:
+    case NUM:{
+      expression();
+      jj_consume_token(SEMICOLON);
+      break;
+      }
+    default:
+      jj_la1[2] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
     }
 }
 
@@ -190,7 +215,7 @@ if (jjtc000) {
         break;
         }
       default:
-        jj_la1[2] = jj_gen;
+        jj_la1[3] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -216,7 +241,7 @@ if (jjtc000) {
     }
 }
 
-  static final public void identifier() throws ParseException {/*@bgen(jjtree) Ident */
+  static final public ASTIdent identifier() throws ParseException {/*@bgen(jjtree) Ident */
     ASTIdent jjtn000 = new ASTIdent(JJTIDENT);
     boolean jjtc000 = true;
     jjtree.openNodeScope(jjtn000);Token t;
@@ -225,11 +250,13 @@ if (jjtc000) {
 jjtree.closeNodeScope(jjtn000, true);
       jjtc000 = false;
 jjtn000.jjtSetValue(t.image);
+        {if ("" != null) return jjtn000;}
     } finally {
 if (jjtc000) {
         jjtree.closeNodeScope(jjtn000, true);
       }
     }
+    throw new Error("Missing return statement in function");
 }
 
   static final public void expression() throws ParseException {/*@bgen(jjtree) Expr */
@@ -237,7 +264,78 @@ if (jjtc000) {
   boolean jjtc000 = true;
   jjtree.openNodeScope(jjtn000);
     try {
-      additiveExpression();
+      switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+      case LPAREN:
+      case NUM:
+      case IDENT:{
+        additiveExpression();
+        break;
+        }{
+        unary();
+        break;
+        }
+      default:
+        jj_la1[4] = jj_gen;
+        jj_consume_token(-1);
+        throw new ParseException();
+      }
+    } catch (Throwable jjte000) {
+if (jjtc000) {
+            jjtree.clearNodeScope(jjtn000);
+            jjtc000 = false;
+          } else {
+            jjtree.popNode();
+          }
+          if (jjte000 instanceof RuntimeException) {
+            {if (true) throw (RuntimeException)jjte000;}
+          }
+          if (jjte000 instanceof ParseException) {
+            {if (true) throw (ParseException)jjte000;}
+          }
+          {if (true) throw (Error)jjte000;}
+    } finally {
+if (jjtc000) {
+            jjtree.closeNodeScope(jjtn000, true);
+          }
+    }
+}
+
+  static final public ASTAdd additiveExpression() throws ParseException {/*@bgen(jjtree) Add */
+  ASTAdd jjtn000 = new ASTAdd(JJTADD);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
+    try {
+      multiplicativeExpression();
+      label_3:
+      while (true) {
+        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+        case PLUS:
+        case MINUS:{
+          ;
+          break;
+          }
+        default:
+          jj_la1[5] = jj_gen;
+          break label_3;
+        }
+        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
+        case PLUS:{
+          plusExpression();
+          break;
+          }
+        case MINUS:{
+          minusExpression();
+          break;
+          }
+        default:
+          jj_la1[6] = jj_gen;
+          jj_consume_token(-1);
+          throw new ParseException();
+        }
+      }
+jjtree.closeNodeScope(jjtn000, true);
+      jjtc000 = false;
+{if ("" != null) return jjtn000;}
     } catch (Throwable jjte000) {
 if (jjtc000) {
         jjtree.clearNodeScope(jjtn000);
@@ -257,67 +355,71 @@ if (jjtc000) {
         jjtree.closeNodeScope(jjtn000, true);
       }
     }
+    throw new Error("Missing return statement in function");
 }
 
-  static final public void additiveExpression() throws ParseException {
-ASTAdd jjtn001 = new ASTAdd(JJTADD);
-      boolean jjtc001 = true;
-      jjtree.openNodeScope(jjtn001);
+  static final public ASTPlus plusExpression() throws ParseException {/*@bgen(jjtree) Plus */
+  ASTPlus jjtn000 = new ASTPlus(JJTPLUS);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
     try {
+      jj_consume_token(PLUS);
       multiplicativeExpression();
-      label_3:
-      while (true) {
-        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-        case PLUS:
-        case MINUS:{
-          ;
-          break;
-          }
-        default:
-          jj_la1[3] = jj_gen;
-          break label_3;
-        }
-        switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
-        case PLUS:{
-          jj_consume_token(PLUS);
-          break;
-          }
-        case MINUS:{
-          jj_consume_token(MINUS);
-          break;
-          }
-        default:
-          jj_la1[4] = jj_gen;
-          jj_consume_token(-1);
-          throw new ParseException();
-        }
-        multiplicativeExpression();
-      }
-    } catch (Throwable jjte001) {
-if (jjtc001) {
-        jjtree.clearNodeScope(jjtn001);
-        jjtc001 = false;
+    } catch (Throwable jjte000) {
+if (jjtc000) {
+        jjtree.clearNodeScope(jjtn000);
+        jjtc000 = false;
       } else {
         jjtree.popNode();
       }
-      if (jjte001 instanceof RuntimeException) {
-        {if (true) throw (RuntimeException)jjte001;}
+      if (jjte000 instanceof RuntimeException) {
+        {if (true) throw (RuntimeException)jjte000;}
       }
-      if (jjte001 instanceof ParseException) {
-        {if (true) throw (ParseException)jjte001;}
+      if (jjte000 instanceof ParseException) {
+        {if (true) throw (ParseException)jjte000;}
       }
-      {if (true) throw (Error)jjte001;}
+      {if (true) throw (Error)jjte000;}
     } finally {
-if (jjtc001) {
-        jjtree.closeNodeScope(jjtn001, jjtree.nodeArity() > 1);
+if (jjtc000) {
+        jjtree.closeNodeScope(jjtn000, true);
       }
     }
+    throw new Error("Missing return statement in function");
 }
 
-  static final public void multiplicativeExpression() throws ParseException {
-ASTMult jjtn001 = new ASTMult(JJTMULT);
-      boolean jjtc001 = true;
-      jjtree.openNodeScope(jjtn001);
+  static final public ASTMinus minusExpression() throws ParseException {/*@bgen(jjtree) Minus */
+  ASTMinus jjtn000 = new ASTMinus(JJTMINUS);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
+    try {
+      jj_consume_token(MINUS);
+      multiplicativeExpression();
+    } catch (Throwable jjte000) {
+if (jjtc000) {
+        jjtree.clearNodeScope(jjtn000);
+        jjtc000 = false;
+      } else {
+        jjtree.popNode();
+      }
+      if (jjte000 instanceof RuntimeException) {
+        {if (true) throw (RuntimeException)jjte000;}
+      }
+      if (jjte000 instanceof ParseException) {
+        {if (true) throw (ParseException)jjte000;}
+      }
+      {if (true) throw (Error)jjte000;}
+    } finally {
+if (jjtc000) {
+        jjtree.closeNodeScope(jjtn000, true);
+      }
+    }
+    throw new Error("Missing return statement in function");
+}
+
+  static final public ASTMult multiplicativeExpression() throws ParseException {/*@bgen(jjtree) Mult */
+  ASTMult jjtn000 = new ASTMult(JJTMULT);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
     try {
       unary();
       label_4:
@@ -330,48 +432,147 @@ ASTMult jjtn001 = new ASTMult(JJTMULT);
           break;
           }
         default:
-          jj_la1[5] = jj_gen;
+          jj_la1[7] = jj_gen;
           break label_4;
         }
         switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
         case MULT:{
-          jj_consume_token(MULT);
-          break;
-          }
-        case DIV:{
-          jj_consume_token(DIV);
+          timesExpression();
           break;
           }
         case MOD:{
-          jj_consume_token(MOD);
+          modExpression();
+          break;
+          }
+        case DIV:{
+          divideExpression();
           break;
           }
         default:
-          jj_la1[6] = jj_gen;
+          jj_la1[8] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
-        unary();
       }
-    } catch (Throwable jjte001) {
-if (jjtc001) {
-        jjtree.clearNodeScope(jjtn001);
-        jjtc001 = false;
+jjtree.closeNodeScope(jjtn000, true);
+      jjtc000 = false;
+{if ("" != null) return jjtn000;}
+    } catch (Throwable jjte000) {
+if (jjtc000) {
+        jjtree.clearNodeScope(jjtn000);
+        jjtc000 = false;
       } else {
         jjtree.popNode();
       }
-      if (jjte001 instanceof RuntimeException) {
-        {if (true) throw (RuntimeException)jjte001;}
+      if (jjte000 instanceof RuntimeException) {
+        {if (true) throw (RuntimeException)jjte000;}
       }
-      if (jjte001 instanceof ParseException) {
-        {if (true) throw (ParseException)jjte001;}
+      if (jjte000 instanceof ParseException) {
+        {if (true) throw (ParseException)jjte000;}
       }
-      {if (true) throw (Error)jjte001;}
+      {if (true) throw (Error)jjte000;}
     } finally {
-if (jjtc001) {
-        jjtree.closeNodeScope(jjtn001, jjtree.nodeArity() > 1);
+if (jjtc000) {
+        jjtree.closeNodeScope(jjtn000, true);
       }
     }
+    throw new Error("Missing return statement in function");
+}
+
+  static final public ASTTimes timesExpression() throws ParseException {/*@bgen(jjtree) Times */
+  ASTTimes jjtn000 = new ASTTimes(JJTTIMES);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
+    try {
+      jj_consume_token(MULT);
+      unary();
+jjtree.closeNodeScope(jjtn000, true);
+      jjtc000 = false;
+{if ("" != null) return jjtn000;}
+    } catch (Throwable jjte000) {
+if (jjtc000) {
+        jjtree.clearNodeScope(jjtn000);
+        jjtc000 = false;
+      } else {
+        jjtree.popNode();
+      }
+      if (jjte000 instanceof RuntimeException) {
+        {if (true) throw (RuntimeException)jjte000;}
+      }
+      if (jjte000 instanceof ParseException) {
+        {if (true) throw (ParseException)jjte000;}
+      }
+      {if (true) throw (Error)jjte000;}
+    } finally {
+if (jjtc000) {
+        jjtree.closeNodeScope(jjtn000, true);
+      }
+    }
+    throw new Error("Missing return statement in function");
+}
+
+  static final public ASTDivide divideExpression() throws ParseException {/*@bgen(jjtree) Divide */
+  ASTDivide jjtn000 = new ASTDivide(JJTDIVIDE);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
+    try {
+      jj_consume_token(DIV);
+      unary();
+jjtree.closeNodeScope(jjtn000, true);
+      jjtc000 = false;
+{if ("" != null) return jjtn000;}
+    } catch (Throwable jjte000) {
+if (jjtc000) {
+        jjtree.clearNodeScope(jjtn000);
+        jjtc000 = false;
+      } else {
+        jjtree.popNode();
+      }
+      if (jjte000 instanceof RuntimeException) {
+        {if (true) throw (RuntimeException)jjte000;}
+      }
+      if (jjte000 instanceof ParseException) {
+        {if (true) throw (ParseException)jjte000;}
+      }
+      {if (true) throw (Error)jjte000;}
+    } finally {
+if (jjtc000) {
+        jjtree.closeNodeScope(jjtn000, true);
+      }
+    }
+    throw new Error("Missing return statement in function");
+}
+
+  static final public ASTMod modExpression() throws ParseException {/*@bgen(jjtree) Mod */
+  ASTMod jjtn000 = new ASTMod(JJTMOD);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
+    try {
+      jj_consume_token(MOD);
+      unary();
+jjtree.closeNodeScope(jjtn000, true);
+      jjtc000 = false;
+{if ("" != null) return jjtn000;}
+    } catch (Throwable jjte000) {
+if (jjtc000) {
+        jjtree.clearNodeScope(jjtn000);
+        jjtc000 = false;
+      } else {
+        jjtree.popNode();
+      }
+      if (jjte000 instanceof RuntimeException) {
+        {if (true) throw (RuntimeException)jjte000;}
+      }
+      if (jjte000 instanceof ParseException) {
+        {if (true) throw (ParseException)jjte000;}
+      }
+      {if (true) throw (Error)jjte000;}
+    } finally {
+if (jjtc000) {
+        jjtree.closeNodeScope(jjtn000, true);
+      }
+    }
+    throw new Error("Missing return statement in function");
 }
 
   static final public void unary() throws ParseException {
@@ -383,7 +584,7 @@ if (jjtc001) {
       break;
       }
     case IDENT:{
-      jj_consume_token(IDENT);
+      identifier();
       break;
       }
     case NUM:{
@@ -391,7 +592,7 @@ if (jjtc001) {
       break;
       }
     default:
-      jj_la1[7] = jj_gen;
+      jj_la1[9] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -433,6 +634,39 @@ if (jjtc000) {
     throw new Error("Missing return statement in function");
 }
 
+  static final public ASTEcho echoStmt() throws ParseException {/*@bgen(jjtree) Echo */
+    ASTEcho jjtn000 = new ASTEcho(JJTECHO);
+    boolean jjtc000 = true;
+    jjtree.openNodeScope(jjtn000);Token t;
+    try {
+      jj_consume_token(ECHO);
+      expression();
+      jj_consume_token(SEMICOLON);
+jjtree.closeNodeScope(jjtn000, true);
+      jjtc000 = false;
+{if ("" != null) return jjtn000;}
+    } catch (Throwable jjte000) {
+if (jjtc000) {
+        jjtree.clearNodeScope(jjtn000);
+        jjtc000 = false;
+      } else {
+        jjtree.popNode();
+      }
+      if (jjte000 instanceof RuntimeException) {
+        {if (true) throw (RuntimeException)jjte000;}
+      }
+      if (jjte000 instanceof ParseException) {
+        {if (true) throw (ParseException)jjte000;}
+      }
+      {if (true) throw (Error)jjte000;}
+    } finally {
+if (jjtc000) {
+        jjtree.closeNodeScope(jjtn000, true);
+      }
+    }
+    throw new Error("Missing return statement in function");
+}
+
   static private boolean jj_initialized_once = false;
   /** Generated Token Manager. */
   static public GriddyTokenManager token_source;
@@ -443,7 +677,7 @@ if (jjtc000) {
   static public Token jj_nt;
   static private int jj_ntk;
   static private int jj_gen;
-  static final private int[] jj_la1 = new int[8];
+  static final private int[] jj_la1 = new int[10];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static {
@@ -451,10 +685,10 @@ if (jjtc000) {
 	   jj_la1_init_1();
 	}
 	private static void jj_la1_init_0() {
-	   jj_la1_0 = new int[] {0x0,0x0,0x10000,0xc000000,0xc000000,0x70000000,0x70000000,0x0,};
+	   jj_la1_0 = new int[] {0x0,0x20000,0x20000,0x10000,0x0,0x18000000,0x18000000,0xe0000000,0xe0000000,0x0,};
 	}
 	private static void jj_la1_init_1() {
-	   jj_la1_1 = new int[] {0x100000,0x120200,0x1a0200,0x0,0x0,0x0,0x0,0x120200,};
+	   jj_la1_1 = new int[] {0x200000,0x240400,0x240400,0x340400,0x240400,0x0,0x0,0x0,0x0,0x240400,};
 	}
 
   /** Constructor with InputStream. */
@@ -475,7 +709,7 @@ if (jjtc000) {
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 8; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 10; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -490,7 +724,7 @@ if (jjtc000) {
 	 jj_ntk = -1;
 	 jjtree.reset();
 	 jj_gen = 0;
-	 for (int i = 0; i < 8; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 10; i++) jj_la1[i] = -1;
   }
 
   /** Constructor. */
@@ -507,7 +741,7 @@ if (jjtc000) {
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 8; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 10; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -526,7 +760,7 @@ if (jjtc000) {
 	 jj_ntk = -1;
 	 jjtree.reset();
 	 jj_gen = 0;
-	 for (int i = 0; i < 8; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 10; i++) jj_la1[i] = -1;
   }
 
   /** Constructor with generated Token Manager. */
@@ -542,7 +776,7 @@ if (jjtc000) {
 	 token = new Token();
 	 jj_ntk = -1;
 	 jj_gen = 0;
-	 for (int i = 0; i < 8; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 10; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -552,7 +786,7 @@ if (jjtc000) {
 	 jj_ntk = -1;
 	 jjtree.reset();
 	 jj_gen = 0;
-	 for (int i = 0; i < 8; i++) jj_la1[i] = -1;
+	 for (int i = 0; i < 10; i++) jj_la1[i] = -1;
   }
 
   static private Token jj_consume_token(int kind) throws ParseException {
@@ -603,12 +837,12 @@ if (jjtc000) {
   /** Generate ParseException. */
   static public ParseException generateParseException() {
 	 jj_expentries.clear();
-	 boolean[] la1tokens = new boolean[55];
+	 boolean[] la1tokens = new boolean[56];
 	 if (jj_kind >= 0) {
 	   la1tokens[jj_kind] = true;
 	   jj_kind = -1;
 	 }
-	 for (int i = 0; i < 8; i++) {
+	 for (int i = 0; i < 10; i++) {
 	   if (jj_la1[i] == jj_gen) {
 		 for (int j = 0; j < 32; j++) {
 		   if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -620,7 +854,7 @@ if (jjtc000) {
 		 }
 	   }
 	 }
-	 for (int i = 0; i < 55; i++) {
+	 for (int i = 0; i < 56; i++) {
 	   if (la1tokens[i]) {
 		 jj_expentry = new int[1];
 		 jj_expentry[0] = i;

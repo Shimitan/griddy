@@ -19,6 +19,8 @@ public class Griddy {
         try {
             ASTStart n = parser.Start();
             n.dump("");
+            Visitor v = new Visitor();
+            n.jjtAccept(v, "");
         } catch (Exception e) {
             System.out.println("An error occurred.");
             System.out.println(e.getMessage());
@@ -55,6 +57,7 @@ TOKEN : {
     |   < GAME_MAIN:    "GAME"  >   // game phase begin
     |   < FUNC_DECL:    "fun"   >   // function declaration
     |   < BOARD_DECL:   "board" >   // board declaration token, e.g. 'board (n,m)'
+    |   < ECHO:         "echo"  >   // prints the output
 }
 
 /* Punctuators */
@@ -127,14 +130,20 @@ void setupPhase() #Setup : {}
 
 void setupStmt() #void : {}
 {
-    assignment()
+        assignment()
 }
 
 void gamePhase() #Game : {}
 {
     <GAME_MAIN>
-    // TODO: Define game phase grammar.
-    (expression() <SEMICOLON>)*
+    (gameStmt())+
+}
+
+void gameStmt() #void : {}
+{
+        assignment()
+    |   echoStmt()
+    |   expression() <SEMICOLON>
 }
 
 void boardDeclaration() #Board :
@@ -156,36 +165,76 @@ void assignment() #Assign : {}
     identifier() <ASSIGN> (boardDeclaration() | expression() | stringLiteral()) <SEMICOLON>
 }
 
-void identifier() #Ident : {
+ASTIdent identifier() #Ident : {
     Token t;
 }
 {
     t=<IDENT>
-    { jjtThis.jjtSetValue(t.image); }
+    {
+        jjtThis.jjtSetValue(t.image);
+        return jjtThis;
+    }
 }
 
 void expression() #Expr : {}
 {
-    additiveExpression()
+        additiveExpression()
+    |   unary()
 }
 
-void additiveExpression() #void : {}
+ASTAdd additiveExpression() #Add : {}
 {
-    (
-        multiplicativeExpression() ((<PLUS> | <MINUS>) multiplicativeExpression() )*
-    ) #Add(>1)
+    multiplicativeExpression() (plusExpression() | minusExpression())*
+    {
+        return jjtThis;
+    }
 }
 
-void multiplicativeExpression() #void : {}
+ASTPlus plusExpression() #Plus : {}
 {
-    (
-        unary() ((<MULT> | <DIV> | <MOD>) unary())*
-    ) #Mult(>1)
+    <PLUS> multiplicativeExpression()
+}
+
+ASTMinus minusExpression() #Minus : {}
+{
+    <MINUS> multiplicativeExpression()
+}
+
+ASTMult multiplicativeExpression() #Mult : {}
+{
+    unary() (timesExpression() | modExpression() | divideExpression())*
+    {
+        return jjtThis;
+    }
+}
+
+ASTTimes timesExpression() #Times : {}
+{
+    <MULT> unary()
+    {
+        return jjtThis;
+    }
+}
+
+ASTDivide divideExpression() #Divide : {}
+{
+    <DIV> unary()
+    {
+        return jjtThis;
+    }
+}
+
+ASTMod modExpression() #Mod : {}
+{
+    <MOD> unary()
+    {
+        return jjtThis;
+    }
 }
 
 void unary() #void : {}
 {
-    <LPAREN> expression() <RPAREN> | <IDENT> | number()
+    <LPAREN> expression() <RPAREN> | identifier() | number()
 }
 
 ASTInteger number() #Integer :
@@ -211,3 +260,15 @@ ASTString stringLiteral() #String :
         return jjtThis;
     }
 }
+
+ASTEcho echoStmt() #Echo :
+{
+    Token t;
+}
+{
+    <ECHO> expression() <SEMICOLON>
+    {
+        return jjtThis;
+    }
+}
+
