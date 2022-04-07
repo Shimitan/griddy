@@ -10,6 +10,17 @@ import com.company.*;
 
 public
 interface Node {
+  public Object jjtGetValue();
+
+  public String getName();
+
+  public boolean neighborHasKey(String k);
+
+  public boolean keyInParentScope(String k);
+
+  public boolean keyInOuterScope(String k);
+
+  public boolean keyInScope(String k);
 
   /** This method is called after the node has been made the current
     node.  It indicates that child nodes can now be added to it. */

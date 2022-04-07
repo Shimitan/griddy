@@ -14,7 +14,7 @@ class ASTIdent extends SimpleNode {
 
   @Override
   public String toString() {
-    return super.toString() + ": " + value.toString();
+    return super.toString() + ": " + name;
   }
   @Override
   public String toString(String prefix) { return prefix + toString(); }
