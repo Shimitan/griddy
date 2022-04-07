@@ -4,6 +4,7 @@ options {
     NODE_PACKAGE = "com.company.parser";
     JJTREE_OUTPUT_DIRECTORY = "src/com/company/parser";
     VISITOR = true;
+    LOOKAHEAD = 1;
 }
 
 PARSER_BEGIN(Griddy)
@@ -32,16 +33,16 @@ public class Griddy {
 PARSER_END(Griddy)
 
 /* Whitespace characters */
-SPECIAL_TOKEN : {
+SKIP : {
         < WHITE_SPACE:  <TAB> | <NEWLINE> | <SP>    >
     |   < #SP:   " "     >
     |   < #TAB:  "\t"    >
-    |   < NEWLINE:  "\n" | "\r" | "\r\n"    >   // line endings
 }
 
 /* Comments */
 SPECIAL_TOKEN : {
         <SINGLE_LINE_COMMENT:   "#" (~["\n","\r"])* <NEWLINE>   >
+    |   < NEWLINE:  "\n" | "\r" | "\r\n"    >   // line endings
 }
 
 /* Reserved keywords */
@@ -112,8 +113,6 @@ TOKEN : {
     |   < #LETTER:      ["a"-"z","A"-"Z"] >
 }
 
-// TODO: Define string grammar.
-
 ASTStart Start() : {}
 {
     setupPhase()
@@ -130,7 +129,7 @@ void setupPhase() #Setup : {}
 
 void setupStmt() #void : {}
 {
-        assignment()
+        assignment() <SEMICOLON>
 }
 
 void gamePhase() #Game : {}
@@ -141,9 +140,9 @@ void gamePhase() #Game : {}
 
 void gameStmt() #void : {}
 {
-        assignment()
-    |   echoStmt()
-    |   expression() <SEMICOLON>
+        assignment() <SEMICOLON>
+    |   echoStmt() <SEMICOLON>
+
 }
 
 void boardDeclaration() #Board :
@@ -162,7 +161,36 @@ void boardDeclaration() #Board :
 
 void assignment() #Assign : {}
 {
-    identifier() <ASSIGN> (boardDeclaration() | expression() | stringLiteral()) <SEMICOLON>
+    identifier() <ASSIGN> (boardDeclaration() | arrithmetic() | stringLiteral())
+}
+
+void primary() #void : {}
+{
+        identifier()
+    |   number()
+}
+
+void arrithmetic() #void : {}
+{
+        <LPAREN> arrithmetic() <RPAREN>
+    |   unary()
+        (   ( <MULT> arrithmetic()  ) #Mul
+        |   ( <DIV> arrithmetic()   ) #Div
+        |   ( <MOD> arrithmetic()   ) #Mod
+        |   ( <PLUS> arrithmetic()  ) #Add
+        |   ( <MINUS> arrithmetic() ) #Sub
+        )*
+}
+
+void unary() #void :
+{
+    Token t = null;
+}
+{
+      t=<PLUS> arrithmetic()
+    | t=<MINUS> arrithmetic()
+    |   number()
+    |   identifier()
 }
 
 ASTIdent identifier() #Ident : {
@@ -174,67 +202,6 @@ ASTIdent identifier() #Ident : {
         jjtThis.jjtSetValue(t.image);
         return jjtThis;
     }
-}
-
-void expression() #Expr : {}
-{
-        additiveExpression()
-    |   unary()
-}
-
-ASTAdd additiveExpression() #Add : {}
-{
-    multiplicativeExpression() (plusExpression() | minusExpression())*
-    {
-        return jjtThis;
-    }
-}
-
-ASTPlus plusExpression() #Plus : {}
-{
-    <PLUS> multiplicativeExpression()
-}
-
-ASTMinus minusExpression() #Minus : {}
-{
-    <MINUS> multiplicativeExpression()
-}
-
-ASTMult multiplicativeExpression() #Mult : {}
-{
-    unary() (timesExpression() | modExpression() | divideExpression())*
-    {
-        return jjtThis;
-    }
-}
-
-ASTTimes timesExpression() #Times : {}
-{
-    <MULT> unary()
-    {
-        return jjtThis;
-    }
-}
-
-ASTDivide divideExpression() #Divide : {}
-{
-    <DIV> unary()
-    {
-        return jjtThis;
-    }
-}
-
-ASTMod modExpression() #Mod : {}
-{
-    <MOD> unary()
-    {
-        return jjtThis;
-    }
-}
-
-void unary() #void : {}
-{
-    <LPAREN> expression() <RPAREN> | identifier() | number()
 }
 
 ASTInteger number() #Integer :
@@ -256,7 +223,7 @@ ASTString stringLiteral() #String :
 {
     t=<STRING>
     {
-        jjtThis.jjtSetValue(t.image.substring(1, t.image.length()-1));
+        jjtThis.jjtSetValue(t.image.substring(1, (t.image.length() - 1)));
         return jjtThis;
     }
 }
@@ -266,7 +233,7 @@ ASTEcho echoStmt() #Echo :
     Token t;
 }
 {
-    <ECHO> expression() <SEMICOLON>
+    <ECHO> arrithmetic()
     {
         return jjtThis;
     }

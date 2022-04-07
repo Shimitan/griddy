@@ -16,5 +16,5 @@ A programming language for board games.
 sh build.sh
 
 # Test parser
-java -cp src com.company.Main < examples/example_1.griddy
+java -cp output com.company.Main < examples/example_1.griddy
 ```
