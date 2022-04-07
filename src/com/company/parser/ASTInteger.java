@@ -1,6 +1,6 @@
 package com.company.parser;
 
-import com.company.Griddy;
+import com.company.*;
 
 public class ASTInteger extends SimpleNode {
     protected Node parent;

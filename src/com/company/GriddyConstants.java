@@ -17,9 +17,9 @@ public interface GriddyConstants {
   /** RegularExpression Id. */
   int TAB = 3;
   /** RegularExpression Id. */
-  int NEWLINE = 4;
+  int SINGLE_LINE_COMMENT = 4;
   /** RegularExpression Id. */
-  int SINGLE_LINE_COMMENT = 5;
+  int NEWLINE = 5;
   /** RegularExpression Id. */
   int IF = 6;
   /** RegularExpression Id. */
@@ -132,8 +132,8 @@ public interface GriddyConstants {
     "<WHITE_SPACE>",
     "\" \"",
     "\"\\t\"",
-    "<NEWLINE>",
     "<SINGLE_LINE_COMMENT>",
+    "<NEWLINE>",
     "\"if\"",
     "\"else\"",
     "\"from\"",

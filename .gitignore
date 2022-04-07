@@ -24,4 +24,5 @@ hs_err_pid*
 
 !javacc.jar
 
-/gen/
+src/com/company/parser/griddy.jj
+src/com/company/Griddy.java

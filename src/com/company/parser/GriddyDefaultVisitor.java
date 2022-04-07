@@ -26,31 +26,22 @@ public class GriddyDefaultVisitor implements GriddyVisitor{
   public Object visit(ASTAssign node, Object data){
     return defaultVisit(node, data);
   }
-  public Object visit(ASTIdent node, Object data){
+  public Object visit(ASTMul node, Object data){
     return defaultVisit(node, data);
   }
-  public Object visit(ASTExpr node, Object data){
+  public Object visit(ASTDiv node, Object data){
+    return defaultVisit(node, data);
+  }
+  public Object visit(ASTMod node, Object data){
     return defaultVisit(node, data);
   }
   public Object visit(ASTAdd node, Object data){
     return defaultVisit(node, data);
   }
-  public Object visit(ASTPlus node, Object data){
+  public Object visit(ASTSub node, Object data){
     return defaultVisit(node, data);
   }
-  public Object visit(ASTMinus node, Object data){
-    return defaultVisit(node, data);
-  }
-  public Object visit(ASTMult node, Object data){
-    return defaultVisit(node, data);
-  }
-  public Object visit(ASTTimes node, Object data){
-    return defaultVisit(node, data);
-  }
-  public Object visit(ASTDivide node, Object data){
-    return defaultVisit(node, data);
-  }
-  public Object visit(ASTMod node, Object data){
+  public Object visit(ASTIdent node, Object data){
     return defaultVisit(node, data);
   }
   public Object visit(ASTInteger node, Object data){
@@ -63,4 +54,4 @@ public class GriddyDefaultVisitor implements GriddyVisitor{
     return defaultVisit(node, data);
   }
 }
-/* JavaCC - OriginalChecksum=f0dc6bee3e0ef39fa50713f50607dd20 (do not edit this line) */
+/* JavaCC - OriginalChecksum=308b5861891fc1a875c17e50f6ed05a0 (do not edit this line) */

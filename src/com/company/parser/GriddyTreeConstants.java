@@ -11,18 +11,15 @@ public interface GriddyTreeConstants
   public int JJTGAME = 3;
   public int JJTBOARD = 4;
   public int JJTASSIGN = 5;
-  public int JJTIDENT = 6;
-  public int JJTEXPR = 7;
-  public int JJTADD = 8;
-  public int JJTPLUS = 9;
-  public int JJTMINUS = 10;
-  public int JJTMULT = 11;
-  public int JJTTIMES = 12;
-  public int JJTDIVIDE = 13;
-  public int JJTMOD = 14;
-  public int JJTINTEGER = 15;
-  public int JJTSTRING = 16;
-  public int JJTECHO = 17;
+  public int JJTMUL = 6;
+  public int JJTDIV = 7;
+  public int JJTMOD = 8;
+  public int JJTADD = 9;
+  public int JJTSUB = 10;
+  public int JJTIDENT = 11;
+  public int JJTINTEGER = 12;
+  public int JJTSTRING = 13;
+  public int JJTECHO = 14;
 
 
   public String[] jjtNodeName = {
@@ -32,18 +29,15 @@ public interface GriddyTreeConstants
     "Game",
     "Board",
     "Assign",
-    "Ident",
-    "Expr",
-    "Add",
-    "Plus",
-    "Minus",
-    "Mult",
-    "Times",
-    "Divide",
+    "Mul",
+    "Div",
     "Mod",
+    "Add",
+    "Sub",
+    "Ident",
     "Integer",
     "String",
     "Echo",
   };
 }
-/* JavaCC - OriginalChecksum=fab9702cede93dfa0466d6cbcdc4b5db (do not edit this line) */
+/* JavaCC - OriginalChecksum=3437a1c4804ba169290768dd3aea41f3 (do not edit this line) */
