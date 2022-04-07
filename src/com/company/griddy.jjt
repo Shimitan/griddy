@@ -101,14 +101,14 @@ TOKEN : {
 TOKEN : {
         < BOOL: "true" | "false"    > : IN_REGEX
     |   < NULL: "empty" > : DEFAULT
-    |   < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])*  > : DEFAULT
+    |   < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])+  > : DEFAULT
     |   < NEG_NUM:  "-" <NUM>   > : DEFAULT
     |   < STRING:  "\"" (~["\"","\r","\n"])* "\"" > : DEFAULT // string literal
 }
 
 /* Identifier */
 TOKEN : {
-        < IDENT:        <IDENT_PART> | <IDENT_PART> (<IDENT_PART>)* >
+        < IDENT:        <IDENT_PART> (<IDENT_PART>)* >
     |   < #IDENT_PART:  (<LETTER> | "_")+ >
     |   < #LETTER:      ["a"-"z","A"-"Z"] >
 }
