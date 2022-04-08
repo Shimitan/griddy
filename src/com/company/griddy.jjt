@@ -234,7 +234,7 @@ ASTEcho echoStmt() #Echo :
     Token t;
 }
 {
-    <ECHO> arrithmetic()
+    <ECHO> ( arrithmetic() | stringLiteral() )
     {
         return jjtThis;
     }

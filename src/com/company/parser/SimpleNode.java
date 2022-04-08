@@ -5,7 +5,7 @@ import com.company.*;
 public
 class SimpleNode implements Node {
 
-  protected Node parent;
+  protected Node parent = null;
   protected Node[] children;
   protected int id;
   protected Object value;
@@ -42,15 +42,19 @@ class SimpleNode implements Node {
   }
 
   public Node jjtGetChild(int i) {
-    return children[i];
+    return this.children[i];
+  }
+
+  public Node[] getChildren() {
+    return this.children;
   }
 
   public int jjtGetNumChildren() {
-    return (children == null) ? 0 : children.length;
+    return (this.children == null) ? 0 : this.children.length;
   }
 
   public void jjtSetValue(Object value) { this.value = value; }
-  public Object jjtGetValue() { return value; }
+  public Object jjtGetValue() { return this.value; }
 
   /** Accept the visitor. **/
   public Object jjtAccept(GriddyVisitor visitor, Object data)
@@ -61,9 +65,9 @@ class SimpleNode implements Node {
   /** Accept the visitor. **/
   public Object childrenAccept(GriddyVisitor visitor, Object data)
 {
-    if (children != null) {
-      for (int i = 0; i < children.length; ++i) {
-        children[i].jjtAccept(visitor, data);
+    if (this.children != null) {
+      for (Node child : this.children) {
+        child.jjtAccept(visitor, data);
       }
     }
     return data;
@@ -79,9 +83,9 @@ class SimpleNode implements Node {
 
   public void dump(String prefix) {
     System.out.println(toString(prefix));
-    if (children != null) {
-      for (int i = 0; i < children.length; ++i) {
-        SimpleNode n = (SimpleNode)children[i];
+    if (this.children != null) {
+      for (Node child : this.children) {
+        SimpleNode n = (SimpleNode) child;
         if (n != null) {
           n.dump(prefix + " ");
         }
@@ -94,34 +98,10 @@ class SimpleNode implements Node {
   }
 
   public String getName() {
-    return name;
+    return this.name;
   }
 
   public void setName(String k) {
-    name = k;
-  }
-
-  public boolean neighborHasKey(String k) {
-    if (jjtGetNumChildren() > 1)
-      for (Node n : children)
-        if (n.getId() != this.getId() && n.getName().equals(k))
-          return true;
-
-    return false;
-  }
-
-  public boolean keyInParentScope(String k) {
-    return parent.neighborHasKey(k);
-  }
-
-  public boolean keyInOuterScope(String k) {
-    if (parent != null && !keyInParentScope(k))
-      return parent.keyInOuterScope(k);
-
-    return false;
-  }
-
-  public boolean keyInScope(String k) {
-    return neighborHasKey(k) || keyInOuterScope(k);
+    this.name = k;
   }
 }

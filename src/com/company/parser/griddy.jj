@@ -558,7 +558,7 @@ ASTEcho echoStmt()       :
 {/*@bgen(jjtree) Echo */
     try {
 /*@egen*/
-    <ECHO> arrithmetic()/*@bgen(jjtree)*/
+    <ECHO> ( arrithmetic() | stringLiteral() )/*@bgen(jjtree)*/
     {
       jjtree.closeNodeScope(jjtn000, true);
       jjtc000 = false;

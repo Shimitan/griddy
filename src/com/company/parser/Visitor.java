@@ -1,10 +1,34 @@
 package com.company.parser;
 
+import java.util.ArrayList;
+
 import static java.lang.System.out;
 
 public class Visitor extends GriddyDefaultVisitor {
     public Object visit(ASTEcho node, Object data) {
-        out.println("printf(\"%s\", " + node.jjtGetChild(0).getName() + ");");
+        String argType = GriddyTreeConstants.jjtNodeName[node.jjtGetChild(0).getId()];
+        Object argValue = node.jjtGetChild(0).jjtGetValue();
+
+        if (argType.equals("Ident")) {
+            ArrayList<Node> prevAssign = getAssignedInScope(node, node.jjtGetChild(0).getName());
+            Node assocNode = prevAssign
+                    .get(prevAssign.toArray().length - 1)
+                    .jjtGetChild(1);
+            argType = GriddyTreeConstants.jjtNodeName[assocNode.getId()];
+            argValue = node
+                    .jjtGetChild(0)
+                    .getName();
+        }
+
+        switch (argType) {
+            case "Integer" -> out.println("printf(\"%d\", " + argValue + ");");
+            case "String" -> {
+                out.print("printf(\"%s\", ");
+                node.jjtGetChild(0).jjtAccept(this, data);
+                out.println(");");
+            }
+            default -> throw new RuntimeException("Can't echo value of unknown type");
+        }
 
         return data;
     }
@@ -16,7 +40,7 @@ public class Visitor extends GriddyDefaultVisitor {
     public Object visit(ASTStart node, Object data){
         // Include C libraries that might be needed:
         out.println("#include <stdio.h>");
-        out.println("#include <stdlib.h");
+        out.println("#include <stdlib.h>");
         out.println("#include <string.h>");
 
         // Wrap generated C code in the target entry function:
@@ -51,6 +75,43 @@ public class Visitor extends GriddyDefaultVisitor {
         return null;
     }
 
+    boolean isAssignedInScope(Node n, String k) {
+        if (n.jjtGetParent() != null) {
+            for (Node c : n.jjtGetParent().getChildren()) {
+                if (c == n) {
+                    break;
+                }
+
+                if (GriddyTreeConstants.jjtNodeName[c.getId()].equals("Assign")) {
+                    if (c.jjtGetChild(0).getName().equals(k))
+                        return true;
+                }
+            }
+
+            return isAssignedInScope(n.jjtGetParent(), k);
+        }
+
+        return false;
+    }
+
+    ArrayList<Node> getAssignedInScope(Node n, String k) {
+        ArrayList<Node> output = new ArrayList<>();
+
+        if (n.jjtGetParent() != null)
+            for (Node c : n.jjtGetParent().getChildren()) {
+                if (c == n) return output;
+
+                if (GriddyTreeConstants.jjtNodeName[c.getId()].equals("Assign")) {
+                    if (c.jjtGetChild(0).getName().equals(k))
+                        output.add(c);
+
+                } else output.addAll(getAssignedInScope(n.jjtGetParent(), k));
+
+            }
+
+        return output;
+    }
+
     public Object visit(ASTAssign node, Object data) {
         Node identNode = node.jjtGetChild(0);
         Node valueNode = node.jjtGetChild(1);
@@ -59,15 +120,18 @@ public class Visitor extends GriddyDefaultVisitor {
         String valueType = GriddyTreeConstants.jjtNodeName[valueNode.getId()];
 
         // Generate code based on whether the identifier being assigned, has already been declared or not:
-        if (identNode.keyInScope(ident)) {
+        if (isAssignedInScope(identNode, ident)) {
             switch (valueType) {
                 case "String" -> {
                     identNode.jjtAccept(this, data);
-                    out.println(" = realloc(" + value.toString().length() + ", sizeof(char));");
+                    out.print(" = realloc(");
+                    identNode.jjtAccept(this, data);
+                    out.println(", " + (value.toString().length() + 1) + ");");
 
                     out.print("strcpy(");
                     identNode.jjtAccept(this, data);
                     out.print(", ");
+                    valueNode.jjtAccept(this, data);
                     out.println(");");
                 }
                 case "Integer" -> {
@@ -86,7 +150,7 @@ public class Visitor extends GriddyDefaultVisitor {
                     identNode.jjtAccept(this, data);
                     out.println(";");
                     identNode.jjtAccept(this, data);
-                    out.println(" = calloc(" + value.toString().length() + ", sizeof(char));");
+                    out.println(" = calloc(" + (value.toString().length() + 1) + ", sizeof(char));");
                     out.print("strcpy(");
                     identNode.jjtAccept(this, data);
                     out.print(", ");
