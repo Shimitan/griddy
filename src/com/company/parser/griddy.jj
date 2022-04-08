@@ -19,15 +19,16 @@ public class Griddy/*@bgen(jjtree)*/implements GriddyTreeConstants/*@egen*/ {/*@
   protected static JJTGriddyState jjtree = new JJTGriddyState();
 
 /*@egen*/
-
     public static void main(String args[]) {
         Griddy parser = new Griddy(System.in);
 
         try {
             ASTStart n = parser.Start();
-            n.dump("");
-            Visitor v = new Visitor();
-            n.jjtAccept(v, "");
+            if (args.length >0 && args[0].equals("t")) n.dump("");
+            else {
+                Visitor v = new Visitor();
+                n.jjtAccept(v, "");
+            }
         } catch (Exception e) {
             System.out.println("An error occurred.");
             System.out.println(e.getMessage());
@@ -107,14 +108,14 @@ TOKEN : {
 TOKEN : {
         < BOOL: "true" | "false"    > : IN_REGEX
     |   < NULL: "empty" > : DEFAULT
-    |   < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])*  > : DEFAULT
+    |   < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])+  > : DEFAULT
     |   < NEG_NUM:  "-" <NUM>   > : DEFAULT
     |   < STRING:  "\"" (~["\"","\r","\n"])* "\"" > : DEFAULT // string literal
 }
 
 /* Identifier */
 TOKEN : {
-        < IDENT:        <IDENT_PART> | <IDENT_PART> (<IDENT_PART>)* >
+        < IDENT:        <IDENT_PART> (<IDENT_PART>)* >
     |   < #IDENT_PART:  (<LETTER> | "_")+ >
     |   < #LETTER:      ["a"-"z","A"-"Z"] >
 }
@@ -477,7 +478,7 @@ ASTIdent identifier()        : {/*@bgen(jjtree) Ident */
     }
 /*@egen*/
     {
-        jjtn000.jjtSetValue(t.image);
+        jjtn000.setName(t.image);
         return jjtn000;
     }/*@bgen(jjtree)*/
     } finally {
@@ -506,7 +507,7 @@ ASTInteger number()          :
     }
 /*@egen*/
     {
-        jjtn000.setValue(Integer.parseInt(t.image));
+        jjtn000.jjtSetValue(Integer.parseInt(t.image));
         return jjtn000;
     }/*@bgen(jjtree)*/
     } finally {
@@ -557,7 +558,7 @@ ASTEcho echoStmt()       :
 {/*@bgen(jjtree) Echo */
     try {
 /*@egen*/
-    <ECHO> arrithmetic()/*@bgen(jjtree)*/
+    <ECHO> ( arrithmetic() | stringLiteral() )/*@bgen(jjtree)*/
     {
       jjtree.closeNodeScope(jjtn000, true);
       jjtc000 = false;

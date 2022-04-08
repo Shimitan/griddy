@@ -13,15 +13,16 @@ package com.company;
 import java.util.ArrayList;
 
 public class Griddy {
-
     public static void main(String args[]) {
         Griddy parser = new Griddy(System.in);
 
         try {
             ASTStart n = parser.Start();
-            n.dump("");
-            Visitor v = new Visitor();
-            n.jjtAccept(v, "");
+            if (args.length >0 && args[0].equals("t")) n.dump("");
+            else {
+                Visitor v = new Visitor();
+                n.jjtAccept(v, "");
+            }
         } catch (Exception e) {
             System.out.println("An error occurred.");
             System.out.println(e.getMessage());
@@ -199,7 +200,7 @@ ASTIdent identifier() #Ident : {
 {
     t=<IDENT>
     {
-        jjtThis.jjtSetValue(t.image);
+        jjtThis.setName(t.image);
         return jjtThis;
     }
 }
@@ -211,7 +212,7 @@ ASTInteger number() #Integer :
 {
     t=<NUM>
     {
-        jjtThis.setValue(Integer.parseInt(t.image));
+        jjtThis.jjtSetValue(Integer.parseInt(t.image));
         return jjtThis;
     }
 }
@@ -233,7 +234,7 @@ ASTEcho echoStmt() #Echo :
     Token t;
 }
 {
-    <ECHO> arrithmetic()
+    <ECHO> ( arrithmetic() | stringLiteral() )
     {
         return jjtThis;
     }
