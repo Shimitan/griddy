@@ -194,6 +194,18 @@ public class Visitor extends GriddyDefaultVisitor {
 
         return data;
     }
+    
+    public Object visit(ASTIdent node, Object data) {
+        out.print(node.getName());
+
+        return data;
+    }
+
+    public Object visit(ASTInteger node, Object data) {
+        out.print(node.jjtGetValue());
+
+        return data;
+    }
 
     public Object visit(ASTDiv node, Object data) {
         node.jjtGetChild(0).jjtAccept(this, data);
