@@ -189,12 +189,9 @@ public class Visitor extends GriddyDefaultVisitor {
         return data;
     }
 
-    public Object visit(ASTDiv node, Object data) {
+    public Object visit(ASTString node, Object data) {
+        out.print("\"" + node.jjtGetValue() + "\"");
 
-        return data;
-    }
-
-    public Object visit(ASTString node, Object data){
         return data;
     }
 
