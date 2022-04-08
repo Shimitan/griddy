@@ -40,7 +40,7 @@ public class Visitor implements GriddyVisitor {
     }
 
     public Object visit(ASTBoard node, Object data){
-        return null;
+        return data;
     }
 
     public Object visit(ASTAssign node, Object data) {
@@ -63,7 +63,7 @@ public class Visitor implements GriddyVisitor {
     public Object visit(ASTIdent node, Object data){
         System.out.print(node.jjtGetValue());
 
-        return null;
+        return data;
     }
 
     public Object visit(ASTAdd node, Object data){
@@ -85,23 +85,35 @@ public class Visitor implements GriddyVisitor {
     public Object visit(ASTInteger node, Object data){
         System.out.print(node.getValue().toString());
 
-        return null;
+        return data;
     }
 
     public Object visit(ASTString node, Object data){
-        return null;
+        return data;
     }
 
 
     public Object visit(ASTDiv node, Object data) {
-        return null;
+        node.jjtGetChild(0).jjtAccept(this, data);
+        System.out.print("/");
+        node.jjtGetChild(1).jjtAccept(this, data);
+
+        return data;
     }
 
     public Object visit(ASTMod node, Object data) {
-        return null;
+        node.jjtGetChild(0).jjtAccept(this, data);
+        System.out.print("%");
+        node.jjtGetChild(1).jjtAccept(this, data);
+
+        return data;
     }
 
     public Object visit(ASTMul node, Object data) {
-        return null;
+        node.jjtGetChild(0).jjtAccept(this, data);
+        System.out.print("*");
+        node.jjtGetChild(1).jjtAccept(this, data);
+
+        return data;
     }
 }
