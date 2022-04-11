@@ -16,13 +16,15 @@ import java.util.ArrayList;
 public class Griddy {
     public static void main(String args[]) {
         Griddy parser = new Griddy(System.in);
+        StringBuilder output = new StringBuilder("hello");
 
         try {
             ASTStart n = parser.Start();
             if (args.length >0 && args[0].equals("t")) n.dump("");
             else {
                 Visitor v = new Visitor();
-                n.jjtAccept(v, "");
+                n.jjtAccept(v, output);
+                System.out.println(output);
             }
         } catch (Exception e) {
             System.out.println("An error occurred.");
@@ -163,7 +165,7 @@ void boardDeclaration() #Board :
 
 void assignment() #Assign : {}
 {
-    identifier() <ASSIGN> (boardDeclaration() | arrithmetic() | stringLiteral())
+    identifier() <ASSIGN> (boardDeclaration() | arithmetic() | stringLiteral() | bool())
 }
 
 void primary() : {}
@@ -172,15 +174,15 @@ void primary() : {}
     |   number()
 }
 
-void arrithmetic() : {}
+void arithmetic() : {}
 {
-        <LPAREN> arrithmetic() <RPAREN>
+        <LPAREN> arithmetic() <RPAREN>
     |   unary()
-        (   ( <MULT> arrithmetic()  ) #Mul
-        |   ( <DIV> arrithmetic()   ) #Div
-        |   ( <MOD> arrithmetic()   ) #Mod
-        |   ( <PLUS> arrithmetic()  ) #Add
-        |   ( <MINUS> arrithmetic() ) #Sub
+        (   ( <MULT> arithmetic()  ) #Mul
+        |   ( <DIV> arithmetic()   ) #Div
+        |   ( <MOD> arithmetic()   ) #Mod
+        |   ( <PLUS> arithmetic()  ) #Add
+        |   ( <MINUS> arithmetic() ) #Sub
         )*
 }
 
@@ -189,8 +191,8 @@ void unary() :
     Token t = null;
 }
 {
-      t=<PLUS> arrithmetic()
-    | t=<MINUS> arrithmetic()
+      t=<PLUS> arithmetic()
+    | t=<MINUS> arithmetic()
     |   number()
     |   identifier()
 }
@@ -226,6 +228,7 @@ ASTBool bool() #Bool :
 {
     t=<BOOL>
     {
+        jjtThis.jjtSetValue(t.image);
         return jjtThis;
     }
 }
@@ -244,7 +247,7 @@ ASTString stringLiteral() #String :
 
 ASTEcho echoStmt() #Echo : {}
 {
-    <ECHO> ( arrithmetic() | stringLiteral() )
+    <ECHO> ( arithmetic() | stringLiteral() )
     {
         return jjtThis;
     }

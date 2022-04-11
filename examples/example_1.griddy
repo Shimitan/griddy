@@ -9,6 +9,8 @@ SETUP
 
     some_other_variable = "hi";
 
+    bool_var = true;
+
 GAME
     hello = 10;
     hello = 8;
