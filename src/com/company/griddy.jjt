@@ -193,7 +193,8 @@ void unary() #void :
     |   identifier()
 }
 
-ASTIdent identifier() #Ident : {
+ASTIdent identifier() #Ident :
+{
     Token t;
 }
 {
@@ -228,10 +229,7 @@ ASTString stringLiteral() #String :
     }
 }
 
-ASTEcho echoStmt() #Echo :
-{
-    Token t;
-}
+ASTEcho echoStmt() #Echo : {}
 {
     <ECHO> arrithmetic()
     {
