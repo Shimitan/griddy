@@ -4,6 +4,8 @@ options {
     NODE_PACKAGE = "com.company.parser";
     JJTREE_OUTPUT_DIRECTORY = "src/com/company/parser";
     VISITOR = true;
+    LOOKAHEAD = 1;
+    NODE_DEFAULT_VOID = true;
 }
 
 PARSER_BEGIN(Griddy)
@@ -12,13 +14,16 @@ package com.company;
 import java.util.ArrayList;
 
 public class Griddy {
-
     public static void main(String args[]) {
         Griddy parser = new Griddy(System.in);
 
         try {
             ASTStart n = parser.Start();
-            n.dump("");
+            if (args.length >0 && args[0].equals("t")) n.dump("");
+            else {
+                Visitor v = new Visitor();
+                n.jjtAccept(v, "");
+            }
         } catch (Exception e) {
             System.out.println("An error occurred.");
             System.out.println(e.getMessage());
@@ -30,16 +35,16 @@ public class Griddy {
 PARSER_END(Griddy)
 
 /* Whitespace characters */
-SPECIAL_TOKEN : {
+SKIP : {
         < WHITE_SPACE:  <TAB> | <NEWLINE> | <SP>    >
     |   < #SP:   " "     >
     |   < #TAB:  "\t"    >
-    |   < NEWLINE:  "\n" | "\r" | "\r\n"    >   // line endings
 }
 
 /* Comments */
 SPECIAL_TOKEN : {
         <SINGLE_LINE_COMMENT:   "#" (~["\n","\r"])* <NEWLINE>   >
+    |   < NEWLINE:  "\n" | "\r" | "\r\n"    >   // line endings
 }
 
 /* Reserved keywords */
@@ -51,6 +56,7 @@ TOKEN : {
     |   < IN:   "in"    >   // e.g. 'for x in iterable'
     |   < FOR:  "for"   >   // for loop begin
     |   < WHILE:"while" >   // while loop begin
+    |   < ECHO: "echo"  >   // prints the output
     |   < GAME_SETUP:   "SETUP" >   // setup phase begin
     |   < GAME_MAIN:    "GAME"  >   // game phase begin
     |   < FUNC_DECL:    "fun"   >   // function declaration
@@ -92,7 +98,7 @@ TOKEN : {
     |   < RBRACKET: "]" > : IN_REGEX    // right square bracket
 }
 
-/* Literals */
+/* Literals (terminals) */
 <DEFAULT, IN_REGEX>
 TOKEN : {
         < BOOL: "true" | "false"    > : IN_REGEX
@@ -102,16 +108,14 @@ TOKEN : {
     |   < STRING:  "\"" (~["\"","\r","\n"])* "\"" > : DEFAULT // string literal
 }
 
-/* Identifier */
+/* Identifier (terminals) */
 TOKEN : {
-        < IDENT:        <IDENT_PART> | <IDENT_PART> (<IDENT_PART>)* >
+        < IDENT:        <IDENT_PART> (<IDENT_PART>)* >
     |   < #IDENT_PART:  (<LETTER> | "_")+ >
     |   < #LETTER:      ["a"-"z","A"-"Z"] >
 }
 
-// TODO: Define string grammar.
-
-ASTStart Start() : {}
+ASTStart Start() #Start : {}
 {
     setupPhase()
     gamePhase()
@@ -125,16 +129,22 @@ void setupPhase() #Setup : {}
     (setupStmt())*
 }
 
-void setupStmt() #void : {}
+void setupStmt() : {}
 {
-    assignment()
+        assignment() <SEMICOLON>
 }
 
 void gamePhase() #Game : {}
 {
     <GAME_MAIN>
-    // TODO: Define game phase grammar.
-    (expression() <SEMICOLON>)*
+    (gameStmt())+
+}
+
+void gameStmt() : {}
+{
+        assignment() <SEMICOLON>
+    |   echoStmt() <SEMICOLON>
+
 }
 
 void boardDeclaration() #Board :
@@ -153,39 +163,48 @@ void boardDeclaration() #Board :
 
 void assignment() #Assign : {}
 {
-    identifier() <ASSIGN> (boardDeclaration() | expression() | stringLiteral()) <SEMICOLON>
+    identifier() <ASSIGN> (boardDeclaration() | arrithmetic() | stringLiteral())
 }
 
-void identifier() #Ident : {
+void primary() : {}
+{
+        identifier()
+    |   number()
+}
+
+void arrithmetic() : {}
+{
+        <LPAREN> arrithmetic() <RPAREN>
+    |   unary()
+        (   ( <MULT> arrithmetic()  ) #Mul
+        |   ( <DIV> arrithmetic()   ) #Div
+        |   ( <MOD> arrithmetic()   ) #Mod
+        |   ( <PLUS> arrithmetic()  ) #Add
+        |   ( <MINUS> arrithmetic() ) #Sub
+        )*
+}
+
+void unary() :
+{
+    Token t = null;
+}
+{
+      t=<PLUS> arrithmetic()
+    | t=<MINUS> arrithmetic()
+    |   number()
+    |   identifier()
+}
+
+ASTIdent identifier() #Ident :
+{
     Token t;
 }
 {
     t=<IDENT>
-    { jjtThis.jjtSetValue(t.image); }
-}
-
-void expression() #Expr : {}
-{
-    additiveExpression()
-}
-
-void additiveExpression() #void : {}
-{
-    (
-        multiplicativeExpression() ((<PLUS> | <MINUS>) multiplicativeExpression() )*
-    ) #Add(>1)
-}
-
-void multiplicativeExpression() #void : {}
-{
-    (
-        unary() ((<MULT> | <DIV> | <MOD>) unary())*
-    ) #Mult(>1)
-}
-
-void unary() #void : {}
-{
-    <LPAREN> expression() <RPAREN> | <IDENT> | number()
+    {
+        jjtThis.setName(t.image);
+        return jjtThis;
+    }
 }
 
 ASTInteger number() #Integer :
@@ -195,7 +214,18 @@ ASTInteger number() #Integer :
 {
     t=<NUM>
     {
-        jjtThis.setValue(Integer.parseInt(t.image));
+        jjtThis.jjtSetValue(Integer.parseInt(t.image));
+        return jjtThis;
+    }
+}
+
+ASTBool bool() #Bool :
+{
+    Token t;
+}
+{
+    t=<BOOL>
+    {
         return jjtThis;
     }
 }
@@ -207,7 +237,16 @@ ASTString stringLiteral() #String :
 {
     t=<STRING>
     {
-        jjtThis.jjtSetValue(t.image.substring(1, t.image.length()-1));
+        jjtThis.jjtSetValue(t.image.substring(1, (t.image.length() - 1)));
         return jjtThis;
     }
 }
+
+ASTEcho echoStmt() #Echo : {}
+{
+    <ECHO> ( arrithmetic() | stringLiteral() )
+    {
+        return jjtThis;
+    }
+}
+

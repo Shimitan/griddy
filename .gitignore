@@ -24,4 +24,15 @@ hs_err_pid*
 
 !javacc.jar
 
-/gen/
+src/com/company/parser/griddy.jj
+src/com/company/Griddy.java
+src/com/company/ParseException.java
+src/com/company/SimpleCharStream.java
+src/com/company/Token.java
+src/com/company/TokenMgrError.java
+src/com/company/GriddyTokenManager.java
+
+*.out
+*.exe
+
+test.c

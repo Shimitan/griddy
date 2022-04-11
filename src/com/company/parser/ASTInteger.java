@@ -1,13 +1,8 @@
 package com.company.parser;
 
-import com.company.Griddy;
+import com.company.*;
 
 public class ASTInteger extends SimpleNode {
-    protected Node parent;
-    protected Node[] children;
-    protected int id;
-    protected Object value;
-
     public ASTInteger(int id) {
         super(id);
     }
@@ -15,37 +10,22 @@ public class ASTInteger extends SimpleNode {
         super(p, id);
     }
 
-    public void setValue(Object v) { value = v; }
-    public Object getValue() { return value; }
-
-    public void jjtOpen() {}
-    public void jjtClose() {}
-
-    public void jjtSetParent(Node n) {}
-    public Node jjtGetParent() { return parent; }
-
-    public void jjtAddChild(Node n, int i) {
-        if (children == null) {
-            children = new Node[i + 1];
-        } else if (i >= children.length) {
-            Node[] c = new Node[i + 1];
-            System.arraycopy(children, 0, c, 0, children.length);
-            children = c;
-        }
-        children[i] = n;
-    }
-    public Node jjtGetChild(int i) { return children[i]; }
-
-    public int jjtGetNumChildren() { return children.length; }
-
-    public int getId() { return id; }
-
+    @Override
     public String toString() {
         return super.toString() + ": " + value.toString();
     }
+    @Override
     public String toString(String prefix) { return prefix + toString(); }
 
+    @Override
     public void dump(String prefix) {
         System.out.println(toString(prefix));
+    }
+
+    /** Accept the visitor. **/
+    public Object jjtAccept(GriddyVisitor visitor, Object data) {
+
+        return
+                visitor.visit(this, data);
     }
 }

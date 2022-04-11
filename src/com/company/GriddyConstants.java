@@ -17,9 +17,9 @@ public interface GriddyConstants {
   /** RegularExpression Id. */
   int TAB = 3;
   /** RegularExpression Id. */
-  int NEWLINE = 4;
+  int SINGLE_LINE_COMMENT = 4;
   /** RegularExpression Id. */
-  int SINGLE_LINE_COMMENT = 5;
+  int NEWLINE = 5;
   /** RegularExpression Id. */
   int IF = 6;
   /** RegularExpression Id. */
@@ -35,89 +35,91 @@ public interface GriddyConstants {
   /** RegularExpression Id. */
   int WHILE = 12;
   /** RegularExpression Id. */
-  int GAME_SETUP = 13;
+  int ECHO = 13;
   /** RegularExpression Id. */
-  int GAME_MAIN = 14;
+  int GAME_SETUP = 14;
   /** RegularExpression Id. */
-  int FUNC_DECL = 15;
+  int GAME_MAIN = 15;
   /** RegularExpression Id. */
-  int BOARD_DECL = 16;
+  int FUNC_DECL = 16;
   /** RegularExpression Id. */
-  int EQ = 17;
+  int BOARD_DECL = 17;
   /** RegularExpression Id. */
-  int NEQ = 18;
+  int EQ = 18;
   /** RegularExpression Id. */
-  int GEQ = 19;
+  int NEQ = 19;
   /** RegularExpression Id. */
-  int LEQ = 20;
+  int GEQ = 20;
   /** RegularExpression Id. */
-  int NOT = 21;
+  int LEQ = 21;
   /** RegularExpression Id. */
-  int LT = 22;
+  int NOT = 22;
   /** RegularExpression Id. */
-  int GT = 23;
+  int LT = 23;
   /** RegularExpression Id. */
-  int AND = 24;
+  int GT = 24;
   /** RegularExpression Id. */
-  int OR = 25;
+  int AND = 25;
   /** RegularExpression Id. */
-  int PLUS = 26;
+  int OR = 26;
   /** RegularExpression Id. */
-  int MINUS = 27;
+  int PLUS = 27;
   /** RegularExpression Id. */
-  int MULT = 28;
+  int MINUS = 28;
   /** RegularExpression Id. */
-  int DIV = 29;
+  int MULT = 29;
   /** RegularExpression Id. */
-  int MOD = 30;
+  int DIV = 30;
   /** RegularExpression Id. */
-  int INCR = 31;
+  int MOD = 31;
   /** RegularExpression Id. */
-  int DECR = 32;
+  int INCR = 32;
   /** RegularExpression Id. */
-  int ASSIGN = 33;
+  int DECR = 33;
   /** RegularExpression Id. */
-  int PLUS_ASSIGN = 34;
+  int ASSIGN = 34;
   /** RegularExpression Id. */
-  int MINUS_ASSIGN = 35;
+  int PLUS_ASSIGN = 35;
   /** RegularExpression Id. */
-  int MULT_ASSIGN = 36;
+  int MINUS_ASSIGN = 36;
   /** RegularExpression Id. */
-  int DIV_ASSIGN = 37;
+  int MULT_ASSIGN = 37;
   /** RegularExpression Id. */
-  int DOT = 38;
+  int DIV_ASSIGN = 38;
   /** RegularExpression Id. */
-  int COMMA = 39;
+  int DOT = 39;
   /** RegularExpression Id. */
-  int SEMICOLON = 40;
+  int COMMA = 40;
   /** RegularExpression Id. */
-  int LPAREN = 41;
+  int SEMICOLON = 41;
   /** RegularExpression Id. */
-  int RPAREN = 42;
+  int LPAREN = 42;
   /** RegularExpression Id. */
-  int LBRACE = 43;
+  int RPAREN = 43;
   /** RegularExpression Id. */
-  int RBRACE = 44;
+  int LBRACE = 44;
   /** RegularExpression Id. */
-  int LBRACKET = 45;
+  int RBRACE = 45;
   /** RegularExpression Id. */
-  int RBRACKET = 46;
+  int LBRACKET = 46;
   /** RegularExpression Id. */
-  int BOOL = 47;
+  int RBRACKET = 47;
   /** RegularExpression Id. */
-  int NULL = 48;
+  int BOOL = 48;
   /** RegularExpression Id. */
-  int NUM = 49;
+  int NULL = 49;
   /** RegularExpression Id. */
-  int NEG_NUM = 50;
+  int NUM = 50;
   /** RegularExpression Id. */
-  int STRING = 51;
+  int NEG_NUM = 51;
   /** RegularExpression Id. */
-  int IDENT = 52;
+  int STRING = 52;
   /** RegularExpression Id. */
-  int IDENT_PART = 53;
+  int IDENT = 53;
   /** RegularExpression Id. */
-  int LETTER = 54;
+  int IDENT_PART = 54;
+  /** RegularExpression Id. */
+  int LETTER = 55;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -130,8 +132,8 @@ public interface GriddyConstants {
     "<WHITE_SPACE>",
     "\" \"",
     "\"\\t\"",
-    "<NEWLINE>",
     "<SINGLE_LINE_COMMENT>",
+    "<NEWLINE>",
     "\"if\"",
     "\"else\"",
     "\"from\"",
@@ -139,6 +141,7 @@ public interface GriddyConstants {
     "\"in\"",
     "\"for\"",
     "\"while\"",
+    "\"echo\"",
     "\"SETUP\"",
     "\"GAME\"",
     "\"fun\"",
