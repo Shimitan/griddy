@@ -6,6 +6,7 @@
                                                        
                    
     LOOKAHEAD = 1;
+                             
 }
 
 PARSER_BEGIN(Griddy)
@@ -61,11 +62,11 @@ TOKEN : {
     |   < IN:   "in"    >   // e.g. 'for x in iterable'
     |   < FOR:  "for"   >   // for loop begin
     |   < WHILE:"while" >   // while loop begin
+    |   < ECHO: "echo"  >   // prints the output
     |   < GAME_SETUP:   "SETUP" >   // setup phase begin
     |   < GAME_MAIN:    "GAME"  >   // game phase begin
     |   < FUNC_DECL:    "fun"   >   // function declaration
     |   < BOARD_DECL:   "board" >   // board declaration token, e.g. 'board (n,m)'
-    |   < ECHO:         "echo"  >   // prints the output
 }
 
 /* Punctuators */
@@ -103,7 +104,7 @@ TOKEN : {
     |   < RBRACKET: "]" > : IN_REGEX    // right square bracket
 }
 
-/* Literals */
+/* Literals (terminals) */
 <DEFAULT, IN_REGEX>
 TOKEN : {
         < BOOL: "true" | "false"    > : IN_REGEX
@@ -113,14 +114,14 @@ TOKEN : {
     |   < STRING:  "\"" (~["\"","\r","\n"])* "\"" > : DEFAULT // string literal
 }
 
-/* Identifier */
+/* Identifier (terminals) */
 TOKEN : {
         < IDENT:        <IDENT_PART> (<IDENT_PART>)* >
     |   < #IDENT_PART:  (<LETTER> | "_")+ >
     |   < #LETTER:      ["a"-"z","A"-"Z"] >
 }
 
-ASTStart Start() : {/*@bgen(jjtree) Start */
+ASTStart Start()        : {/*@bgen(jjtree) Start */
   ASTStart jjtn000 = new ASTStart(JJTSTART);
   boolean jjtc000 = true;
   jjtree.openNodeScope(jjtn000);
@@ -191,7 +192,7 @@ void setupPhase()        : {/*@bgen(jjtree) Setup */
 /*@egen*/
 }
 
-void setupStmt()       : {}
+void setupStmt() : {}
 {
         assignment() <SEMICOLON>
 }
@@ -228,7 +229,7 @@ void gamePhase()       : {/*@bgen(jjtree) Game */
 /*@egen*/
 }
 
-void gameStmt()       : {}
+void gameStmt() : {}
 {
         assignment() <SEMICOLON>
     |   echoStmt() <SEMICOLON>
@@ -297,13 +298,13 @@ void assignment()         : {/*@bgen(jjtree) Assign */
 /*@egen*/
 }
 
-void primary()       : {}
+void primary() : {}
 {
         identifier()
     |   number()
 }
 
-void arrithmetic()       : {}
+void arrithmetic() : {}
 {
         <LPAREN> arrithmetic() <RPAREN>
     |   unary()
@@ -450,7 +451,7 @@ void arrithmetic()       : {}
         )*
 }
 
-void unary()       :
+void unary() :
 {
     Token t = null;
 }
@@ -461,7 +462,8 @@ void unary()       :
     |   identifier()
 }
 
-ASTIdent identifier()        : {/*@bgen(jjtree) Ident */
+ASTIdent identifier()        :
+{/*@bgen(jjtree) Ident */
     ASTIdent jjtn000 = new ASTIdent(JJTIDENT);
     boolean jjtc000 = true;
     jjtree.openNodeScope(jjtn000);
@@ -518,6 +520,34 @@ ASTInteger number()          :
 /*@egen*/
 }
 
+ASTBool bool()       :
+{/*@bgen(jjtree) Bool */
+    ASTBool jjtn000 = new ASTBool(JJTBOOL);
+    boolean jjtc000 = true;
+    jjtree.openNodeScope(jjtn000);
+/*@egen*/
+    Token t;
+}
+{/*@bgen(jjtree) Bool */
+    try {
+/*@egen*/
+    t=<BOOL>/*@bgen(jjtree)*/
+    {
+      jjtree.closeNodeScope(jjtn000, true);
+      jjtc000 = false;
+    }
+/*@egen*/
+    {
+        return jjtn000;
+    }/*@bgen(jjtree)*/
+    } finally {
+      if (jjtc000) {
+        jjtree.closeNodeScope(jjtn000, true);
+      }
+    }
+/*@egen*/
+}
+
 ASTString stringLiteral()         :
 {/*@bgen(jjtree) String */
     ASTString jjtn000 = new ASTString(JJTSTRING);
@@ -547,14 +577,11 @@ ASTString stringLiteral()         :
 /*@egen*/
 }
 
-ASTEcho echoStmt()       :
-{/*@bgen(jjtree) Echo */
-    ASTEcho jjtn000 = new ASTEcho(JJTECHO);
-    boolean jjtc000 = true;
-    jjtree.openNodeScope(jjtn000);
-/*@egen*/
-    Token t;
-}
+ASTEcho echoStmt()       : {/*@bgen(jjtree) Echo */
+  ASTEcho jjtn000 = new ASTEcho(JJTECHO);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
+/*@egen*/}
 {/*@bgen(jjtree) Echo */
     try {
 /*@egen*/

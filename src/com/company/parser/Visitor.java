@@ -141,6 +141,12 @@ public class Visitor extends GriddyDefaultVisitor {
                     valueNode.jjtAccept(this, data);
                     out.println(";");
                 }
+                case "Boolean" -> {
+                    identNode.jjtAccept(this,data);
+                    out.print(" = ");
+                    valueNode.jjtAccept(this,data);
+                    out.println(";");
+                }
                 case "Board" -> out.println("/* Board declarations not yet implemented... */");
                 default -> throw new RuntimeException("Encountered invalid value type in assignment.");
             }
@@ -202,6 +208,12 @@ public class Visitor extends GriddyDefaultVisitor {
     }
 
     public Object visit(ASTInteger node, Object data) {
+        out.print(node.jjtGetValue());
+
+        return data;
+    }
+
+    public Object visit(ASTBool node, Object data) {
         out.print(node.jjtGetValue());
 
         return data;

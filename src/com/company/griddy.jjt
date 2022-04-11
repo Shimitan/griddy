@@ -5,6 +5,7 @@ options {
     JJTREE_OUTPUT_DIRECTORY = "src/com/company/parser";
     VISITOR = true;
     LOOKAHEAD = 1;
+    NODE_DEFAULT_VOID = true;
 }
 
 PARSER_BEGIN(Griddy)
@@ -55,11 +56,11 @@ TOKEN : {
     |   < IN:   "in"    >   // e.g. 'for x in iterable'
     |   < FOR:  "for"   >   // for loop begin
     |   < WHILE:"while" >   // while loop begin
+    |   < ECHO: "echo"  >   // prints the output
     |   < GAME_SETUP:   "SETUP" >   // setup phase begin
     |   < GAME_MAIN:    "GAME"  >   // game phase begin
     |   < FUNC_DECL:    "fun"   >   // function declaration
     |   < BOARD_DECL:   "board" >   // board declaration token, e.g. 'board (n,m)'
-    |   < ECHO:         "echo"  >   // prints the output
 }
 
 /* Punctuators */
@@ -97,7 +98,7 @@ TOKEN : {
     |   < RBRACKET: "]" > : IN_REGEX    // right square bracket
 }
 
-/* Literals */
+/* Literals (terminals) */
 <DEFAULT, IN_REGEX>
 TOKEN : {
         < BOOL: "true" | "false"    > : IN_REGEX
@@ -107,14 +108,14 @@ TOKEN : {
     |   < STRING:  "\"" (~["\"","\r","\n"])* "\"" > : DEFAULT // string literal
 }
 
-/* Identifier */
+/* Identifier (terminals) */
 TOKEN : {
         < IDENT:        <IDENT_PART> (<IDENT_PART>)* >
     |   < #IDENT_PART:  (<LETTER> | "_")+ >
     |   < #LETTER:      ["a"-"z","A"-"Z"] >
 }
 
-ASTStart Start() : {}
+ASTStart Start() #Start : {}
 {
     setupPhase()
     gamePhase()
@@ -128,7 +129,7 @@ void setupPhase() #Setup : {}
     (setupStmt())*
 }
 
-void setupStmt() #void : {}
+void setupStmt() : {}
 {
         assignment() <SEMICOLON>
 }
@@ -139,7 +140,7 @@ void gamePhase() #Game : {}
     (gameStmt())+
 }
 
-void gameStmt() #void : {}
+void gameStmt() : {}
 {
         assignment() <SEMICOLON>
     |   echoStmt() <SEMICOLON>
@@ -165,13 +166,13 @@ void assignment() #Assign : {}
     identifier() <ASSIGN> (boardDeclaration() | arrithmetic() | stringLiteral())
 }
 
-void primary() #void : {}
+void primary() : {}
 {
         identifier()
     |   number()
 }
 
-void arrithmetic() #void : {}
+void arrithmetic() : {}
 {
         <LPAREN> arrithmetic() <RPAREN>
     |   unary()
@@ -183,7 +184,7 @@ void arrithmetic() #void : {}
         )*
 }
 
-void unary() #void :
+void unary() :
 {
     Token t = null;
 }
@@ -214,6 +215,17 @@ ASTInteger number() #Integer :
     t=<NUM>
     {
         jjtThis.jjtSetValue(Integer.parseInt(t.image));
+        return jjtThis;
+    }
+}
+
+ASTBool bool() #Bool :
+{
+    Token t;
+}
+{
+    t=<BOOL>
+    {
         return jjtThis;
     }
 }

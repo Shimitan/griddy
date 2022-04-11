@@ -35,15 +35,15 @@ public interface GriddyConstants {
   /** RegularExpression Id. */
   int WHILE = 12;
   /** RegularExpression Id. */
-  int GAME_SETUP = 13;
+  int ECHO = 13;
   /** RegularExpression Id. */
-  int GAME_MAIN = 14;
+  int GAME_SETUP = 14;
   /** RegularExpression Id. */
-  int FUNC_DECL = 15;
+  int GAME_MAIN = 15;
   /** RegularExpression Id. */
-  int BOARD_DECL = 16;
+  int FUNC_DECL = 16;
   /** RegularExpression Id. */
-  int ECHO = 17;
+  int BOARD_DECL = 17;
   /** RegularExpression Id. */
   int EQ = 18;
   /** RegularExpression Id. */
@@ -141,11 +141,11 @@ public interface GriddyConstants {
     "\"in\"",
     "\"for\"",
     "\"while\"",
+    "\"echo\"",
     "\"SETUP\"",
     "\"GAME\"",
     "\"fun\"",
     "\"board\"",
-    "\"echo\"",
     "\"==\"",
     "\"!=\"",
     "\">=\"",

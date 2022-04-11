@@ -18,8 +18,9 @@ public interface GriddyTreeConstants
   public int JJTSUB = 10;
   public int JJTIDENT = 11;
   public int JJTINTEGER = 12;
-  public int JJTSTRING = 13;
-  public int JJTECHO = 14;
+  public int JJTBOOL = 13;
+  public int JJTSTRING = 14;
+  public int JJTECHO = 15;
 
 
   public String[] jjtNodeName = {
@@ -36,8 +37,9 @@ public interface GriddyTreeConstants
     "Sub",
     "Ident",
     "Integer",
+    "Bool",
     "String",
     "Echo",
   };
 }
-/* JavaCC - OriginalChecksum=3437a1c4804ba169290768dd3aea41f3 (do not edit this line) */
+/* JavaCC - OriginalChecksum=caf0ddc178e3a10601cc531be23b3871 (do not edit this line) */
