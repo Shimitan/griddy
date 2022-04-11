@@ -3,20 +3,12 @@ package com.company.parser;
 import com.company.*;
 
 public class ASTInteger extends SimpleNode {
-    protected Node parent;
-    protected Node[] children;
-    protected int id;
-    protected Object value;
-
     public ASTInteger(int id) {
         super(id);
     }
     public ASTInteger(Griddy p, int id) {
         super(p, id);
     }
-
-    public void setValue(Object v) { value = v; }
-    public Object getValue() { return value; }
 
     @Override
     public String toString() {

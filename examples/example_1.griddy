@@ -7,7 +7,12 @@ SETUP
     var_two = 1 + 1;
     some_other_variable = "hello world!";
 
+    some_other_variable = "hi";
+
 GAME
     hello = 10;
+    hello = 8;
     #echo (1+1);
     echo (hello);
+    echo "\n";
+    echo "Hello, World!\n";
