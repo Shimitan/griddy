@@ -83,14 +83,12 @@ class SimpleNode implements Node {
 
   public void dump(String prefix) {
     System.out.println(toString(prefix));
-    if (this.children != null) {
+
+    if (this.children != null)
       for (Node child : this.children) {
         SimpleNode n = (SimpleNode) child;
-        if (n != null) {
-          n.dump(prefix + " ");
-        }
+        if (n != null) n.dump(prefix + " ");
       }
-    }
   }
 
   public int getId() {
