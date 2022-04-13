@@ -16,7 +16,7 @@ import java.util.ArrayList;
 public class Griddy {
     public static void main(String args[]) {
         Griddy parser = new Griddy(System.in);
-        StringBuilder output = new StringBuilder("hello");
+        StringBuilder output = new StringBuilder();
 
         try {
             ASTStart n = parser.Start();
