@@ -29,10 +29,7 @@ java -cp output com.company.Main < examples/example_1.griddy t
 - Parsing *(JJTree)*: `src/com/company/griddy.jjt`
 - AST node interface: `src/com/company/parser/Node.java`
 - Base AST node: `src/com/company/parser/SimpleNode.java`
-- Code generation: `src/com/company/parser/Visitor.java`
+- Code generation: 
+  - C target: `src/com/company/target/CVisitor.java`
+  - JS target: `src/com/company/target/JSVisitor.java`
 - Program entry: `src/com/company/Main.java`
-
-*Modified AST nodes:*
-
-- `src/com/company/parser/ASTInteger.java`
-- `src/com/company/parser/ASTIdent.java`
