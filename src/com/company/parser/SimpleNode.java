@@ -10,7 +10,6 @@ class SimpleNode implements Node {
   protected int id;
   protected Object value;
   protected Griddy parser;
-  protected String name;
 
   public SimpleNode(int i) {
     id = i;
@@ -74,7 +73,7 @@ class SimpleNode implements Node {
   }
 
   public String toString() {
-    return GriddyTreeConstants.jjtNodeName[id];
+    return GriddyTreeConstants.jjtNodeName[id] + ((value != null) ? ": " + value : "");
   }
   public String toString(String prefix) { return prefix + toString(); }
 
@@ -93,13 +92,5 @@ class SimpleNode implements Node {
 
   public int getId() {
     return id;
-  }
-
-  public String getName() {
-    return this.name;
-  }
-
-  public void setName(String k) {
-    this.name = k;
   }
 }

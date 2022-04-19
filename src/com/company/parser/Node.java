@@ -7,8 +7,6 @@ package com.company.parser;
 public interface Node {
   Object jjtGetValue();
 
-  String getName();
-
   Node[] getChildren();
 
   /** This method is called after the node has been made the current
