@@ -39,4 +39,6 @@ src/com/company/GriddyConstants.java
 *.out
 *.exe
 
+test
 test.c
+test.js

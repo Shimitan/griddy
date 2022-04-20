@@ -1,8 +1,13 @@
-package com.company.parser;
+package com.company.target;
 
+import com.company.parser.*;
 import java.util.ArrayList;
+import com.company.Util;
 
-public class Visitor extends GriddyDefaultVisitor {
+/**
+ * Griddy visitor for C targets.
+ */
+public class CVisitor extends GriddyDefaultVisitor {
     /** Throw error in case a base AST node is encountered. */
     public Object visit(SimpleNode node, Object data){
         throw new RuntimeException("Encountered SimpleNode");
@@ -39,7 +44,7 @@ public class Visitor extends GriddyDefaultVisitor {
         String argType = GriddyTreeConstants.jjtNodeName[arg.getId()];
 
         if (argType.equals("Ident")) {
-            ArrayList<Node> prevAssign = getAssignedInScope(node, arg.jjtGetValue().toString());
+            ArrayList<Node> prevAssign = Util.getAssignedInScope(node, arg.jjtGetValue().toString());
             Node assocNode = prevAssign
                     .get(prevAssign.toArray().length - 1)
                     .jjtGetChild(1);
@@ -48,12 +53,12 @@ public class Visitor extends GriddyDefaultVisitor {
 
         return switch (argType) {
             case "Integer", "Expr" -> {
-                output.append("printf(\"%d\", ");
+                output.append("printf(\"%d\\n\", ");
                 arg.jjtAccept(this, data);
                 yield output.append(");\n");
             }
             case "String" -> {
-                output.append("printf(\"%s\", ");
+                output.append("printf(\"%s\\n\", ");
                 arg.jjtAccept(this, data);
                 yield output.append(");\n");
             }
@@ -63,7 +68,7 @@ public class Visitor extends GriddyDefaultVisitor {
 
     public Object visit(ASTSetup node, Object data){
         ((StringBuilder) data).append("/*  SETUP   */\n");
-        for (Node child : node.children)
+        for (Node child : node.getChildren())
             child.jjtAccept(this, data);
 
         return data;
@@ -71,7 +76,7 @@ public class Visitor extends GriddyDefaultVisitor {
 
     public Object visit(ASTGame node, Object data){
         ((StringBuilder) data).append("/*  GAME    */\n");
-        for (Node child : node.children)
+        for (Node child : node.getChildren())
             child.jjtAccept(this, data);
 
         return data;
@@ -79,49 +84,6 @@ public class Visitor extends GriddyDefaultVisitor {
 
     public Object visit(ASTBoard node, Object data){
         return data;
-    }
-
-    /**
-     * Check if identifier name has been declared in scope.
-     * @param node start
-     * @param name identifier
-     * @return status
-     */
-    boolean isDeclaredInScope(Node node, String name) {
-        if (node.jjtGetParent() == null) return false;
-
-        for (Node c : node.jjtGetParent().getChildren()) {
-            if (c == node) break;
-
-            if (GriddyTreeConstants.jjtNodeName[c.getId()].equals("Assign")) {
-                if (c.jjtGetChild(0).jjtGetValue().equals(name))
-                    return true;
-            }
-        }
-
-        return isDeclaredInScope(node.jjtGetParent(), name);
-    }
-
-    /**
-     * Get all previous assignments of identifier name.
-     * @param node start
-     * @param name identifier
-     * @return previous assignment nodes
-     */
-    ArrayList<Node> getAssignedInScope(Node node, String name) {
-        var output = new ArrayList<Node>();
-
-        if (node.jjtGetParent() != null)
-            for (Node c : node.jjtGetParent().getChildren()) {
-                if (c == node) break;
-
-                if (GriddyTreeConstants.jjtNodeName[c.getId()].equals("Assign")
-                        && c.jjtGetChild(0).jjtGetValue().equals(name)
-                ) output.add(c);
-                else output.addAll(getAssignedInScope(node.jjtGetParent(), name));
-            }
-
-        return output;
     }
 
     /**
@@ -137,7 +99,7 @@ public class Visitor extends GriddyDefaultVisitor {
         String valueType = GriddyTreeConstants.jjtNodeName[valueNode.getId()];
 
         // Generate code based on whether the identifier being assigned, has already been declared or not:
-        if (isDeclaredInScope(identNode, ident))
+        if (Util.isDeclaredInScope(identNode, ident))
             return switch (valueType) {
                 case "String" -> {
                     // 1. str_ptr = realloc(str_ptr, str_size);

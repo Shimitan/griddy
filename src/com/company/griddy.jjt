@@ -12,6 +12,8 @@ PARSER_BEGIN(Griddy)
 package com.company;
 
 import java.util.ArrayList;
+import com.company.target.*;
+import com.company.parser.GriddyVisitor;
 
 public class Griddy {
     public static void main(String args[]) {
@@ -22,7 +24,8 @@ public class Griddy {
             ASTStart n = parser.Start();
             if (args.length >0 && args[0].equals("t")) n.dump("");
             else {
-                Visitor v = new Visitor();
+                // GriddyVisitor v = new JSVisitor();
+                GriddyVisitor v = new CVisitor();
                 n.jjtAccept(v, output);
                 System.out.println(output);
             }
