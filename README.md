@@ -16,10 +16,10 @@ A programming language for board games.
 sh build.sh
 
 # Parse example_1 and output generated code to terminal
-java -cp output com.company.Main < examples/example_1.griddy
+java -cp output com.company.Main -f examples/example_1.griddy
 
-# Parse example_1 and output AST to terminal
-java -cp output com.company.Main < examples/example_1.griddy t
+# Compile generated code
+gcc examples/example_1.griddy.c
 ```
 
 ## Files

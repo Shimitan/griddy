@@ -44,8 +44,8 @@ public class GriddyDefaultVisitor implements GriddyVisitor{
   public Object visit(ASTString node, Object data){
     return defaultVisit(node, data);
   }
-  public Object visit(ASTEcho node, Object data){
+  public Object visit(ASTOutput node, Object data){
     return defaultVisit(node, data);
   }
 }
-/* JavaCC - OriginalChecksum=bd1ad378fb608417b502fdf477fe10ba (do not edit this line) */
+/* JavaCC - OriginalChecksum=0b6409b47ef0599ea84aa7714f344280 (do not edit this line) */

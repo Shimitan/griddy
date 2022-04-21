@@ -15,7 +15,7 @@ public class JSVisitor extends GriddyDefaultVisitor {
 
     /** Root */
     public Object visit(ASTStart node, Object data){
-        StringBuilder output = (StringBuilder) data;
+        var output = (StringBuilder) data;
 
         output.append("\nfunction main(){\n"); // main begin.
 
@@ -30,8 +30,8 @@ public class JSVisitor extends GriddyDefaultVisitor {
                 .append("if (require.main ===  module) {\nmain();\n}\n"); // main end.
     }
 
-    public Object visit(ASTEcho node, Object data) {
-        StringBuilder output = (StringBuilder) data;
+    public Object visit(ASTOutput node, Object data) {
+        var output = (StringBuilder) data;
 
         var arg = node.jjtGetChild(0);
         String argType = GriddyTreeConstants.jjtNodeName[arg.getId()];
@@ -63,9 +63,21 @@ public class JSVisitor extends GriddyDefaultVisitor {
     }
 
     public Object visit(ASTGame node, Object data){
-        ((StringBuilder) data).append("/*  GAME    */\n");
+        // 1. /*  GAME    */
+        // 2. let i = 5;
+        // 3. do {
+        // ...
+        // n. } while (0 < i--);
+
+        ((StringBuilder) data)
+                .append("/*  GAME    */\n")
+                .append("let i = 5;") // for testing while win condition is unimplemented.
+                .append("do {\n");
+
         for (Node child : node.getChildren())
             child.jjtAccept(this, data);
+
+        ((StringBuilder) data).append("\n} while (0 < i--);");
 
         return data;
     }
@@ -73,8 +85,6 @@ public class JSVisitor extends GriddyDefaultVisitor {
     public Object visit(ASTBoard node, Object data){
         return data;
     }
-
-
 
     /**
      * Variable assignment nodes, e.g. `my_var = 42`.
