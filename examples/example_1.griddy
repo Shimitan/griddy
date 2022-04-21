@@ -14,7 +14,7 @@ SETUP
 GAME
     hello = 10;
     hello = 8;
-    echo (1+1);
-    echo (hello);
-    echo "\n";
-    echo "Hello, World!\n";
+    output (1+1);
+    output (hello);
+    output "\n";
+    output "Hello, World!\n";
