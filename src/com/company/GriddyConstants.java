@@ -33,7 +33,7 @@ public interface GriddyConstants {
   /** RegularExpression Id. */
   int FOR = 11;
   /** RegularExpression Id. */
-  int END = 12;
+  int WHILE = 12;
   /** RegularExpression Id. */
   int ECHO = 13;
   /** RegularExpression Id. */
@@ -140,7 +140,7 @@ public interface GriddyConstants {
     "\"on\"",
     "\"in\"",
     "\"for\"",
-    "\"end\"",
+    "\"while\"",
     "\"echo\"",
     "\"SETUP\"",
     "\"GAME\"",

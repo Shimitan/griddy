@@ -12,22 +12,19 @@ PARSER_BEGIN(Griddy)
 package com.company;
 
 import java.util.ArrayList;
-import com.company.target.*;
-import com.company.parser.GriddyVisitor;
+import java.io.InputStream;
 
 public class Griddy {
-    public static void main(String args[]) {
-        Griddy parser = new Griddy(System.in);
-        StringBuilder output = new StringBuilder();
+    Target target = Target.C;
+    public static void main(Target target, boolean tree, InputStream input, StringBuilder output) {
+        Griddy parser = new Griddy(input);
 
         try {
             ASTStart n = parser.Start();
-            if (args.length >0 && args[0].equals("t")) n.dump("");
+            if (tree) n.dump("");
             else {
-                // GriddyVisitor v = new JSVisitor();
-                GriddyVisitor v = new CVisitor();
+                Visitor v = new Visitor();
                 n.jjtAccept(v, output);
-                System.out.println(output);
             }
         } catch (Exception e) {
             System.out.println("An error occurred.");
@@ -60,7 +57,7 @@ TOKEN : {
     |   < ON:   "on"    >   // value exist on board, e.g. 'game_piece on my_board'
     |   < IN:   "in"    >   // e.g. 'for x in iterable'
     |   < FOR:  "for"   >   // for loop begin
-    |   < END:  "end"   >   // block end
+    |   < WHILE:"while" >   // while loop begin
     |   < ECHO: "echo"  >   // prints the output
     |   < GAME_SETUP:   "SETUP" >   // setup phase begin
     |   < GAME_MAIN:    "GAME"  >   // game phase begin
@@ -168,55 +165,36 @@ void boardDeclaration() #Board :
 
 void assignment() #Assign : {}
 {
-    identifier() <ASSIGN> (boardDeclaration() | additiveExpr() | stringLiteral())
-}
-
-
-void additiveExpr() #Expr(>1) : {}
-{
-    multiplicativeExpr() ( additiveOperator() multiplicativeExpr() )*
-}
-
-ASTOperator additiveOperator() #Operator :
-{
-    Token t;
-}
-{
-    (t=<PLUS> | t=<MINUS>)
-    {
-        jjtThis.jjtSetValue(t.image);
-        return jjtThis;
-    }
-}
-
-void multiplicativeExpr() #Expr(>1) : {}
-{
-    unary() ( multiplicativeOperator() unary() )*
-}
-
-ASTOperator multiplicativeOperator() #Operator :
-{
-    Token t;
-}
-{
-    (t=<MULT> | t=<DIV> | t=<MOD>)
-    {
-        jjtThis.jjtSetValue(t.image);
-        return jjtThis;
-    }
-}
-
-void unary() : {}
-{
-        <LPAREN> additiveExpr() <RPAREN>
-    |   primary()
-    |   identifier()
+    identifier() <ASSIGN> (boardDeclaration() | arithmetic() | stringLiteral() | bool())
 }
 
 void primary() : {}
 {
-        number()
-    |   bool()
+        identifier()
+    |   number()
+}
+
+void arithmetic() : {}
+{
+        <LPAREN> arithmetic() <RPAREN>
+    |   unary()
+        (   ( <MULT> arithmetic()  ) #Mul
+        |   ( <DIV> arithmetic()   ) #Div
+        |   ( <MOD> arithmetic()   ) #Mod
+        |   ( <PLUS> arithmetic()  ) #Add
+        |   ( <MINUS> arithmetic() ) #Sub
+        )*
+}
+
+void unary() :
+{
+    Token t = null;
+}
+{
+      t=<PLUS> arithmetic()
+    | t=<MINUS> arithmetic()
+    |   number()
+    |   identifier()
 }
 
 ASTIdent identifier() #Ident :
@@ -226,7 +204,7 @@ ASTIdent identifier() #Ident :
 {
     t=<IDENT>
     {
-        jjtThis.jjtSetValue(t.image);
+        jjtThis.setName(t.image);
         return jjtThis;
     }
 }
@@ -269,7 +247,7 @@ ASTString stringLiteral() #String :
 
 ASTEcho echoStmt() #Echo : {}
 {
-    <ECHO> ( additiveExpr() | stringLiteral() )
+    <ECHO> ( arithmetic() | stringLiteral() )
     {
         return jjtThis;
     }
