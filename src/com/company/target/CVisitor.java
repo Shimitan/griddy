@@ -1,3 +1,4 @@
+
 package com.company.target;
 
 import com.company.parser.*;
@@ -183,7 +184,7 @@ public class CVisitor extends GriddyDefaultVisitor {
                 .append(node.jjtGetValue())
                 .append("\"");
     }
-    
+
     public Object visit(ASTIdent node, Object data) {
         return ((StringBuilder) data).append(node.jjtGetValue());
     }
