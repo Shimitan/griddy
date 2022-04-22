@@ -9,6 +9,8 @@ SETUP
 
     some_other_variable = "hi";
 
+    a_game_piece = piece { name: "jerry" };
+
     bool_var = true;
 
 GAME
