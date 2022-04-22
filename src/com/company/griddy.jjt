@@ -6,6 +6,7 @@ options {
     VISITOR = true;
     LOOKAHEAD = 1;
     NODE_DEFAULT_VOID = true;
+    JDK_VERSION = "17.0";
 }
 
 PARSER_BEGIN(Griddy)
@@ -25,7 +26,11 @@ public class Griddy {
             ASTStart n = parser.Start();
             if (tree) n.dump("");
             else {
-                GriddyVisitor v = new CVisitor();
+                GriddyVisitor v;
+                switch(target){
+                    case JS : v = new JSVisitor(); break;
+                    default : v = new CVisitor(); break;
+                }
                 n.jjtAccept(v, output);
             }
         } catch (Exception e) {
