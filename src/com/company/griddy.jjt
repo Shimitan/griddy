@@ -13,7 +13,7 @@ PARSER_BEGIN(Griddy)
 package com.company;
 
 import java.util.ArrayList;
-import java.io.InputStream;
+import java.io.InputStream;import java.util.HashMap;
 import com.company.target.*;
 import com.company.parser.GriddyVisitor;
 
@@ -65,11 +65,12 @@ TOKEN : {
     |   < IN:   "in"    >   // e.g. 'for x in iterable'
     |   < FOR:  "for"   >   // for loop begin
     |   < END:  "end"   >   // block end
-    |   < ECHO: "echo"  >   // prints the output
+    |   < OUTPUT: "output"  >   // prints the output
     |   < GAME_SETUP:   "SETUP" >   // setup phase begin
     |   < GAME_MAIN:    "GAME"  >   // game phase begin
     |   < FUNC_DECL:    "fun"   >   // function declaration
     |   < BOARD_DECL:   "board" >   // board declaration token, e.g. 'board (n,m)'
+    |   < PIECE_DECL:   "piece" >   // game piece declaration token, e.g. 'piece { ...props }'
 }
 
 /* Punctuators */
@@ -99,6 +100,7 @@ TOKEN : {
     |   < DOT:      "." > : DEFAULT     // dot (struct property access maybe?)
     |   < COMMA:    "," > : DEFAULT     // seperator comma
     |   < SEMICOLON: ";"> : DEFAULT     // statement endings
+    |   < COLON:    ":" > : DEFAULT     // property assignment
     |   < LPAREN:   "(" > : DEFAULT     // left parenthesis
     |   < RPAREN:   ")" > : IN_REGEX    // right parenthesis
     |   < LBRACE:   "{" > : DEFAULT     // left curly bracket
@@ -152,7 +154,7 @@ void gamePhase() #Game : {}
 void gameStmt() : {}
 {
         assignment() <SEMICOLON>
-    |   echoStmt() <SEMICOLON>
+    |   outputStmt() <SEMICOLON>
 
 }
 
@@ -170,15 +172,33 @@ void boardDeclaration() #Board :
     }
 }
 
+void pieceDeclaration() #Piece :
+{
+    HashMap<Node, Node> props = new HashMap<Node, Node>();
+}
+{
+    <PIECE_DECL> <LBRACE>
+    (
+        { Node k, v; }
+        k=identifier() <COLON> (v=additiveExpr() | v=stringLiteral())
+        {
+            props.put(k, v);
+            jjtThis.jjtSetValue(props);
+        }
+    )*
+    <RBRACE>
+}
+
 void assignment() #Assign : {}
 {
-    identifier() <ASSIGN> (boardDeclaration() | additiveExpr() | stringLiteral())
+    identifier() <ASSIGN> (boardDeclaration() | pieceDeclaration() | additiveExpr() | stringLiteral())
 }
 
 
-void additiveExpr() #Expr(>1) : {}
+ASTExpr additiveExpr() #Expr(>1) : {}
 {
     multiplicativeExpr() ( additiveOperator() multiplicativeExpr() )*
+    { return jjtThis; }
 }
 
 ASTOperator additiveOperator() #Operator :
@@ -271,9 +291,9 @@ ASTString stringLiteral() #String :
     }
 }
 
-ASTEcho echoStmt() #Echo : {}
+ASTOutput outputStmt() #Output : {}
 {
-    <ECHO> ( additiveExpr() | stringLiteral() )
+    <OUTPUT> ( additiveExpr() | stringLiteral() )
     {
         return jjtThis;
     }
