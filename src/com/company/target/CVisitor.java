@@ -176,6 +176,18 @@ public class CVisitor extends GriddyDefaultVisitor {
                 valueNode.jjtAccept(this, data);
                 yield output.append(";\n");
             }
+            case "Empty" -> {
+                String[] arrOfStr = valueNode.toString().split(" ");
+                if(arrOfStr[0].equals("number")) {
+                    output.append("int ");
+                } else if (arrOfStr[0].equals("string")){
+                    output.append("char *");
+                }
+                identNode.jjtAccept(this, data);
+                output.append(" = ");
+                valueNode.jjtAccept(this, data);
+                yield output.append(";\n");
+            }
             // 1. struct Piece game_piece;
             // ?. game_piece.??? = ???;
             case "Piece" -> {
@@ -237,7 +249,8 @@ public class CVisitor extends GriddyDefaultVisitor {
     }
 
     public Object visit(ASTEmpty node, Object data) {
-        return ((StringBuilder) data).append("NULL");
+        String[] arrOfStr = node.jjtGetValue().toString().split(" ");
+        return ((StringBuilder) data).append("number".equals(arrOfStr[1]) ? "int " : "char[]");
     }
 
     public Object visit(ASTOperator node, Object data) {
