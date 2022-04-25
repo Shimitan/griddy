@@ -73,7 +73,7 @@ public class CVisitor extends GriddyDefaultVisitor {
     }
 
     public Object visit(ASTSetup node, Object data){
-        ((StringBuilder) data).append("/*  SETUP   */\n");
+        ((StringBuilder) data).append("/*    SETUP    */\n");
         for (Node child : node.getChildren())
             child.jjtAccept(this, data);
 
@@ -88,7 +88,7 @@ public class CVisitor extends GriddyDefaultVisitor {
         // n. } while (0 < i--);
 
         ((StringBuilder) data)
-                .append("/*  GAME    */\n")
+                .append("/*    GAME    */\n")
                 .append("int i = 5;") // for testing while win condition is unimplemented.
                 .append("do {\n");
 
@@ -234,6 +234,10 @@ public class CVisitor extends GriddyDefaultVisitor {
         for (Node c : node.getChildren())
             c.jjtAccept(this, data);
         return output.append(")");
+    }
+
+    public Object visit(ASTEmpty node, Object data) {
+        return ((StringBuilder) data).append("NULL");
     }
 
     public Object visit(ASTOperator node, Object data) {

@@ -191,9 +191,20 @@ void pieceDeclaration() #Piece :
 
 void assignment() #Assign : {}
 {
-    identifier() <ASSIGN> (boardDeclaration() | pieceDeclaration() | additiveExpr() | stringLiteral())
+    identifier() <ASSIGN> (boardDeclaration() | pieceDeclaration() | additiveExpr() | stringLiteral() | empty())
 }
 
+ASTEmpty empty() #Empty :
+{
+    Token t;
+}
+{
+    t=<NULL>
+    {
+        jjtThis.jjtSetValue(t.image);
+        return jjtThis;
+    }
+}
 
 ASTExpr additiveExpr() #Expr(>1) : {}
 {
