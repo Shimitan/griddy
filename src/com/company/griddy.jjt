@@ -150,7 +150,6 @@ void gameStmt() : {}
 {
         assignment() <SEMICOLON>
     |   outputStmt() <SEMICOLON>
-
 }
 
 void boardDeclaration() #Board :
@@ -175,7 +174,7 @@ void pieceDeclaration() #Piece :
     <PIECE_DECL> <LBRACE>
     (
         { Node k, v; }
-        k=identifier() <COLON> (v=additiveExpr() | v=stringLiteral())
+        k=identifier() <COLON> (v=expression() | v=stringLiteral())
         {
             props.put(k, v);
             jjtThis.jjtSetValue(props);
@@ -186,13 +185,18 @@ void pieceDeclaration() #Piece :
 
 void assignment() #Assign : {}
 {
-    identifier() <ASSIGN> (boardDeclaration() | pieceDeclaration() | additiveExpr() | stringLiteral())
+    identifier() <ASSIGN>
+    (   boardDeclaration()
+    |   pieceDeclaration()
+    |   expression()
+    |   stringLiteral()
+    )
 }
 
 
-ASTExpr additiveExpr() #Expr(>1) : {}
+ASTExpr expression() #Expr(>1) : {}
 {
-    multiplicativeExpr() ( additiveOperator() multiplicativeExpr() )*
+    multiplicativeExpr() ( ( additiveOperator() | booleanOperator() ) multiplicativeExpr() )*
     { return jjtThis; }
 }
 
@@ -227,15 +231,29 @@ ASTOperator multiplicativeOperator() #Operator :
 
 void unary() : {}
 {
-        <LPAREN> additiveExpr() <RPAREN>
-    |   primary()
+        <LPAREN> expression() <RPAREN>
+    |   number()
+    |   bool()
     |   identifier()
 }
 
-void primary() : {}
+ASTOperator booleanOperator() #Operator :
 {
-        number()
-    |   bool()
+    Token t;
+}
+{
+    (  t=<EQ>
+    |  t=<NEQ>
+    |  t=<LEQ>
+    |  t=<GEQ>
+    |  t=<LT>
+    |  t=<GT>
+    |  t=<OR>
+    )
+    {
+        jjtThis.jjtSetValue(t.image);
+        return jjtThis;
+    }
 }
 
 ASTIdent identifier() #Ident :
@@ -288,7 +306,7 @@ ASTString stringLiteral() #String :
 
 ASTOutput outputStmt() #Output : {}
 {
-    <OUTPUT> ( additiveExpr() | stringLiteral() )
+    <OUTPUT> ( expression() | stringLiteral() )
     {
         return jjtThis;
     }
