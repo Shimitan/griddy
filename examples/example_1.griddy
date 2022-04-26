@@ -8,6 +8,7 @@ SETUP
     some_other_variable = "hello world!";
 
     some_other_variable = "hi";
+    some_boolean_expr = 3 == (1 || 0);
 
     a_game_piece = piece { name: "jerry" };
 
