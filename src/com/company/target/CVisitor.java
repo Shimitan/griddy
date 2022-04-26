@@ -255,7 +255,7 @@ public class CVisitor extends GriddyDefaultVisitor {
 
                 yield output;
             }
-            // 1. struct Piece board[height][width];
+            // 1. struct Piece *board[height][width];
             case "Board" -> {
                 @SuppressWarnings("unchecked")
                 var boardDim = (ArrayList<Integer>) valueNode.jjtGetValue();
