@@ -15,9 +15,11 @@ SETUP
     bool_var = true;
 
 GAME
+    a_board = board (4, 5);
     hello = 10;
     hello = 8;
     output (1+1);
     output (hello);
     output "\n";
     output "Hello, World!\n";
+    output a_board;

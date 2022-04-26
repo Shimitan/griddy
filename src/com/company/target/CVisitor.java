@@ -26,9 +26,9 @@ public class CVisitor extends GriddyDefaultVisitor {
                 .append("#include <stdlib.h>\n")
                 .append("#include <string.h>\n");
 
-        output.append("\nstruct Piece { char* name; };\n\n");
 
         output.append("\nint main(int argc, char *argv[]){\n"); // main begin.
+        output.append("\nstruct Piece { char* name; };\n struct Piece empty_piece;\nempty_piece.name = calloc(7, sizeof(char));\nstrcpy(empty_piece.name, \"_empty\");\n\n");
 
         // Setup phase:
         node.jjtGetChild(0).jjtAccept(this, data);
@@ -49,9 +49,11 @@ public class CVisitor extends GriddyDefaultVisitor {
         var arg = node.jjtGetChild(0);
         String argType = GriddyTreeConstants.jjtNodeName[arg.getId()];
 
+        Node assocNode = null;
+
         if (argType.equals("Ident")) {
             ArrayList<Node> prevAssign = Util.getAssignedInScope(node, arg.jjtGetValue().toString());
-            Node assocNode = prevAssign
+            assocNode = prevAssign
                     .get(prevAssign.toArray().length - 1)
                     .jjtGetChild(1);
             argType = GriddyTreeConstants.jjtNodeName[assocNode.getId()];
@@ -67,6 +69,28 @@ public class CVisitor extends GriddyDefaultVisitor {
                 output.append("printf(\"%s\\n\", ");
                 arg.jjtAccept(this, data);
                 yield output.append(");\n");
+            }
+            case "Board" -> {
+                assert assocNode != null;
+                @SuppressWarnings("unchecked")
+                var boardSize = (ArrayList<Integer>)assocNode.jjtGetValue();
+
+                output.append("printf(\"+---\");\n".repeat(Math.max(0, boardSize.get(0))))
+                        .append("printf(\"+\\n\");\n");
+
+                for (int y = 0; y < boardSize.get(1); y++) {
+                    for (int x = 0; x < boardSize.get(0); x++) {
+                        output.append("printf(\"| %c \", *");
+                        arg.jjtAccept(this, data);
+                        output.append("[").append(y).append("][").append(x)
+                                .append("]->name);\n");
+                    }
+                    output.append("printf(\"|\\n\");\n")
+                            .append("printf(\"+---\");\n".repeat(Math.max(0, boardSize.get(0))))
+                            .append("printf(\"+\\n\");\n");
+                }
+
+                yield output;
             }
             default -> throw new RuntimeException("Can't echo value of unknown type");
         };
@@ -215,14 +239,23 @@ public class CVisitor extends GriddyDefaultVisitor {
                 @SuppressWarnings("unchecked")
                 var boardDim = (ArrayList<Integer>) valueNode.jjtGetValue();
 
-                output.append("struct Piece ");
+                output.append("struct Piece *");
                 identNode.jjtAccept(this, data);
-                yield output
-                        .append("[")
+                output.append("[")
                         .append(boardDim.get(1))
                         .append("][")
                         .append(boardDim.get(0))
-                        .append("];\n");
+                        .append("];\n")
+                        .append("for (int y = 0; y < ")
+                        .append(boardDim.get(1))
+                        .append("; y++)")
+                        .append("for (int x = 0; x < ")
+                        .append(boardDim.get(0))
+                        .append("; x++)\n");
+                identNode.jjtAccept(this, data);
+                output.append("[y][x] = &empty_piece;");
+
+                yield output;
             }
             default -> throw new RuntimeException("Encountered invalid value type in assignment: " + valueNode);
         };
