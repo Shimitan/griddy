@@ -291,4 +291,24 @@ public class CVisitor extends GriddyDefaultVisitor {
     public Object visit(ASTBool node, Object data) {
         return ((StringBuilder) data).append("true".equals(node.jjtGetValue()) ? "1" : "0");
     }
+
+    public Object visit(ASTPlace node, Object data) {
+        var out = (StringBuilder) data;
+        var piece = node.jjtGetChild(0);
+        var board = node.jjtGetChild(1);
+
+        @SuppressWarnings("unchecked")
+        var pos = (ArrayList<Integer>) node.jjtGetChild(2).jjtGetValue();
+
+        board.jjtAccept(this, data);
+        out.append("[")
+                .append(pos.get(1))
+                .append("][")
+                .append(pos.get(0))
+                .append("] = &");
+        piece.jjtAccept(this, data);
+        out.append(";\n");
+
+        return data;
+    }
 }

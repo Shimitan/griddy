@@ -20,6 +20,12 @@ public class GriddyDefaultVisitor implements GriddyVisitor{
   public Object visit(ASTGame node, Object data){
     return defaultVisit(node, data);
   }
+  public Object visit(ASTPlace node, Object data){
+    return defaultVisit(node, data);
+  }
+  public Object visit(ASTPosition node, Object data){
+    return defaultVisit(node, data);
+  }
   public Object visit(ASTBoard node, Object data){
     return defaultVisit(node, data);
   }
@@ -51,4 +57,4 @@ public class GriddyDefaultVisitor implements GriddyVisitor{
     return defaultVisit(node, data);
   }
 }
-/* JavaCC - OriginalChecksum=f184c5c8190b99befdb0d68edbbcfe0f (do not edit this line) */
+/* JavaCC - OriginalChecksum=46a862210096ad2d3c9bacfb85e36c09 (do not edit this line) */

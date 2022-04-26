@@ -22,4 +22,6 @@ GAME
     output (hello);
     output "\n";
     output "Hello, World!\n";
-    output a_board;
+    a_board = board (4,5);
+    a_piece = piece { name: "X" };
+    place a_piece a_board (2, 3);

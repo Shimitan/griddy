@@ -71,6 +71,7 @@ TOKEN : {
     |   < FUNC_DECL:    "fun"   >   // function declaration
     |   < BOARD_DECL:   "board" >   // board declaration token, e.g. 'board (n,m)'
     |   < PIECE_DECL:   "piece" >   // game piece declaration token, e.g. 'piece { ...props }'
+    |   < PLACE: "place"    >   // place pieces on a board
 }
 
 /* Punctuators */
@@ -155,6 +156,27 @@ void gameStmt() : {}
 {
         assignment() <SEMICOLON>
     |   outputStmt() <SEMICOLON>
+    |   placeStmt() <SEMICOLON>
+}
+
+void placeStmt() #Place : {}
+{
+    <PLACE> identifier() identifier() position()
+}
+
+ASTPosition position() #Position :
+{
+    Token x, y;
+    ArrayList<Integer> pos = new ArrayList<Integer>();
+}
+{
+    <LPAREN> x=<NUM> <COMMA> y=<NUM> <RPAREN>
+    {
+        pos.add(Integer.parseInt(x.image));
+        pos.add(Integer.parseInt(y.image));
+
+        return jjtThis;
+    }
 }
 
 void boardDeclaration() #Board :
