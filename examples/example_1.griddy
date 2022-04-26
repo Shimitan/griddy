@@ -14,6 +14,8 @@ SETUP
 
     bool_var = true;
 
+    emptyStr_var = empty string;
+    emptyNum_var = empty number;
 GAME
     a_board = board (4, 5);
     hello = 10;

@@ -113,7 +113,9 @@ TOKEN : {
 <DEFAULT, IN_REGEX>
 TOKEN : {
         < BOOL: "true" | "false"    > : IN_REGEX
-    |   < NULL: "empty" > : DEFAULT
+    |   < NULL: "empty number" | "empty string" > : DEFAULT
+    |   < NULL_NUM: "number" > : DEFAULT
+    |   < NULL_STR: "string" > : DEFAULT
     |   < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])+  > : DEFAULT
     |   < NEG_NUM:  "-" <NUM>   > : DEFAULT
     |   < STRING:  "\"" (~["\"","\r","\n"])* "\"" > : DEFAULT // string literal
@@ -195,9 +197,21 @@ void assignment() #Assign : {}
     |   pieceDeclaration()
     |   expression()
     |   stringLiteral()
+    |   empty()
     )
 }
 
+ASTEmpty empty() #Empty :
+{
+    Token t;
+}
+{
+    t=<NULL>
+    {
+        jjtThis.jjtSetValue(t.image);
+        return jjtThis;
+    }
+}
 
 ASTExpr expression() #Expr(>1) : {}
 {
