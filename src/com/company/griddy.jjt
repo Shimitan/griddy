@@ -175,6 +175,8 @@ ASTPosition position() #Position :
         pos.add(Integer.parseInt(x.image));
         pos.add(Integer.parseInt(y.image));
 
+        jjtThis.jjtSetValue(pos);
+
         return jjtThis;
     }
 }
@@ -201,7 +203,7 @@ void pieceDeclaration() #Piece :
     <PIECE_DECL> <LBRACE>
     (
         { Node k, v; }
-        k=identifier() <COLON> (v=expression() | v=stringLiteral())
+        k=identifier() <COLON> (v=number() | v=stringLiteral())
         {
             props.put(k, v);
             jjtThis.jjtSetValue(props);
