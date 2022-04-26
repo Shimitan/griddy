@@ -203,7 +203,6 @@ public class CVisitor extends GriddyDefaultVisitor {
             case "Empty" -> {
                 valueNode.jjtAccept(this, data);
                 identNode.jjtAccept(this, data);
-                output.append(" = NULL");
                 yield output.append(";\n");
             }
             // 1. struct Piece game_piece;
