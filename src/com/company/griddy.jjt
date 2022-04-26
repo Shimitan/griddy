@@ -113,7 +113,7 @@ TOKEN : {
 <DEFAULT, IN_REGEX>
 TOKEN : {
         < BOOL: "true" | "false"    > : IN_REGEX
-    |   < NULL: "empty" > : DEFAULT
+    |   < NULL: "empty number" | "empty string" > : DEFAULT
     |   < NULL_NUM: "number" > : DEFAULT
     |   < NULL_STR: "string" > : DEFAULT
     |   < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])+  > : DEFAULT
@@ -201,7 +201,7 @@ ASTEmpty empty() #Empty :
     Token t;
 }
 {
-    t=<NULL> (<NULL_NUM> | <NULL_STR>)
+    t=<NULL>
     {
         jjtThis.jjtSetValue(t.image);
         return jjtThis;

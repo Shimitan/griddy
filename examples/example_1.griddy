@@ -13,6 +13,8 @@ SETUP
 
     bool_var = true;
 
+    emptyStr_var = empty string;
+    emptyNum_var = empty number;
 GAME
     hello = 10;
     hello = 8;
