@@ -114,7 +114,7 @@ public class CVisitor extends GriddyDefaultVisitor {
     }
 
     public Object visit(ASTSetup node, Object data){
-        ((StringBuilder) data).append("/*  SETUP   */\n");
+        ((StringBuilder) data).append("/*    SETUP    */\n");
         for (Node child : node.getChildren())
             child.jjtAccept(this, data);
 
@@ -129,7 +129,7 @@ public class CVisitor extends GriddyDefaultVisitor {
         // n. } while (0 < i--);
 
         ((StringBuilder) data)
-                .append("/*  GAME    */\n")
+                .append("/*   GAME    */\n")
                 .append("int i = 5;\n") // for testing while win condition is unimplemented.
                 .append("do {\n");
 
@@ -217,6 +217,11 @@ public class CVisitor extends GriddyDefaultVisitor {
                 valueNode.jjtAccept(this, data);
                 yield output.append(";\n");
             }
+            case "Empty" -> {
+                valueNode.jjtAccept(this, data);
+                identNode.jjtAccept(this, data);
+                yield output.append(";\n");
+            }
             // 1. struct Piece game_piece;
             // ?. game_piece.??? = ???;
             case "Piece" -> {
@@ -255,7 +260,7 @@ public class CVisitor extends GriddyDefaultVisitor {
 
                 yield output;
             }
-            // 1. struct Piece board[height][width];
+            // 1. struct Piece *board[height][width];
             case "Board" -> {
                 @SuppressWarnings("unchecked")
                 var boardDim = (ArrayList<Integer>) valueNode.jjtGetValue();
@@ -288,6 +293,10 @@ public class CVisitor extends GriddyDefaultVisitor {
         for (Node c : node.getChildren())
             c.jjtAccept(this, data);
         return output.append(")");
+    }
+
+    public Object visit(ASTEmpty node, Object data) {
+        return ((StringBuilder) data).append("empty number".equals(node.jjtGetValue()) ? "int " : "char *");
     }
 
     public Object visit(ASTOperator node, Object data) {

@@ -62,6 +62,7 @@ TOKEN : {
     |   < ELSE: "else"  >   // else statement
     |   < FROM: "from"  >   // get value 'from' board, e.g. '(x,y) from my_board'
     |   < ON:   "on"    >   // value exist on board, e.g. 'game_piece on my_board'
+    |   < AT:   "at"    >
     |   < IN:   "in"    >   // e.g. 'for x in iterable'
     |   < FOR:  "for"   >   // for loop begin
     |   < END:  "end"   >   // block end
@@ -114,7 +115,9 @@ TOKEN : {
 <DEFAULT, IN_REGEX>
 TOKEN : {
         < BOOL: "true" | "false"    > : IN_REGEX
-    |   < NULL: "empty" > : DEFAULT
+    |   < NULL: "empty number" | "empty string" > : DEFAULT
+    |   < NULL_NUM: "number" > : DEFAULT
+    |   < NULL_STR: "string" > : DEFAULT
     |   < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])+  > : DEFAULT
     |   < NEG_NUM:  "-" <NUM>   > : DEFAULT
     |   < STRING:  "\"" (~["\"","\r","\n"])* "\"" > : DEFAULT // string literal
@@ -161,7 +164,7 @@ void gameStmt() : {}
 
 void placeStmt() #Place : {}
 {
-    <PLACE> identifier() identifier() position()
+    <PLACE> identifier() <ON> identifier() <AT> position()
 }
 
 ASTPosition position() #Position :
@@ -219,9 +222,21 @@ void assignment() #Assign : {}
     |   pieceDeclaration()
     |   expression()
     |   stringLiteral()
+    |   empty()
     )
 }
 
+ASTEmpty empty() #Empty :
+{
+    Token t;
+}
+{
+    t=<NULL>
+    {
+        jjtThis.jjtSetValue(t.image);
+        return jjtThis;
+    }
+}
 
 ASTExpr expression() #Expr(>1) : {}
 {

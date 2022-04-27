@@ -14,6 +14,8 @@ SETUP
 
     bool_var = true;
 
+    emptyStr_var = empty string;
+    emptyNum_var = empty number;
 GAME
     a_board = board (4, 5);
     hello = 10;
@@ -24,9 +26,9 @@ GAME
     a_board = board (4,5);
     a_piece = piece { name: "X" limit: 3 };
     b_piece = piece { name: "O" limit: 3 };
-    place a_piece a_board (2, 3);
-    place b_piece a_board (4, 5);
-    place b_piece a_board (3, 2);
-    place b_piece a_board (1, 1);
-    place b_piece a_board (4, 4);
+    place a_piece on a_board at (2, 3);
+    place b_piece on a_board at (4, 5);
+    place b_piece on a_board at (3, 2);
+    place b_piece on a_board at (1, 1);
+    place b_piece on a_board at (4, 4);
     output a_board;
