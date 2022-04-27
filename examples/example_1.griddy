@@ -9,15 +9,20 @@ SETUP
 #    some_piece = get (1,5) on other_board;
 
     some_other_variable = "hi";
+    some_boolean_expr = 3 == (1 || 0);
 
     a_game_piece = piece { name: "jerry" };
 
     bool_var = true;
 
+    emptyStr_var = empty string;
+    emptyNum_var = empty number;
 GAME
+    a_board = board (4, 5);
     hello = 10;
     hello = 8;
     output (1+1);
     output (hello);
     output "\n";
     output "Hello, World!\n";
+    output a_board;
