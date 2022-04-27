@@ -6,6 +6,7 @@ SETUP
     var_one = 1 + 5/3 - (4);
     var_two = 1 + 1;
     some_other_variable = "hello world!";
+#    some_piece = get (1,5) on other_board;
 
     some_other_variable = "hi";
 
