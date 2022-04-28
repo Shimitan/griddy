@@ -204,21 +204,6 @@ void boardAccess() #Access  : { }
      position() <ON> identifier()
 }
 
-void position() #Position :
-{
-    Token a, b;
-    ArrayList<Integer> boardPos = new ArrayList<Integer>();
-}
-{
-    <GET> <LPAREN> a=<NUM> <COMMA> b=<NUM> <RPAREN>
-    {
-            boardPos.add(Integer.parseInt(a.image));
-            boardPos.add(Integer.parseInt(b.image));
-            jjtThis.jjtSetValue(boardPos);
-    }
-
-}
-
 void pieceDeclaration() #Piece :
 {
     HashMap<Node, Node> props = new HashMap<Node, Node>();
