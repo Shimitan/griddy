@@ -12,6 +12,8 @@ public interface GriddyVisitor
   public Object visit(ASTPlace node, Object data);
   public Object visit(ASTPosition node, Object data);
   public Object visit(ASTBoard node, Object data);
+  public Object visit(ASTAccess node, Object data);
+  public Object visit(ASTPosition node, Object data);
   public Object visit(ASTPiece node, Object data);
   public Object visit(ASTAssign node, Object data);
   public Object visit(ASTEmpty node, Object data);
@@ -23,4 +25,4 @@ public interface GriddyVisitor
   public Object visit(ASTString node, Object data);
   public Object visit(ASTOutput node, Object data);
 }
-/* JavaCC - OriginalChecksum=5dc67f8916dda31bd0540a5ea0daa094 (do not edit this line) */
+/* JavaCC - OriginalChecksum=89781b4b9b82e9e5accc63344d4d5045 (do not edit this line) */

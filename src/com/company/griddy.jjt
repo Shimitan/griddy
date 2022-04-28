@@ -72,6 +72,7 @@ TOKEN : {
     |   < FUNC_DECL:    "fun"   >   // function declaration
     |   < BOARD_DECL:   "board" >   // board declaration token, e.g. 'board (n,m)'
     |   < PIECE_DECL:   "piece" >   // game piece declaration token, e.g. 'piece { ...props }'
+    |   < GET:  "get"   >
     |   < PLACE: "place"    >   // place pieces on a board
 }
 
@@ -198,6 +199,26 @@ void boardDeclaration() #Board :
     }
 }
 
+void boardAccess() #Access  : { }
+{
+     position() <ON> identifier()
+}
+
+void position() #Position :
+{
+    Token a, b;
+    ArrayList<Integer> boardPos = new ArrayList<Integer>();
+}
+{
+    <GET> <LPAREN> a=<NUM> <COMMA> b=<NUM> <RPAREN>
+    {
+            boardPos.add(Integer.parseInt(a.image));
+            boardPos.add(Integer.parseInt(b.image));
+            jjtThis.jjtSetValue(boardPos);
+    }
+
+}
+
 void pieceDeclaration() #Piece :
 {
     HashMap<Node, Node> props = new HashMap<Node, Node>();
@@ -223,6 +244,7 @@ void assignment() #Assign : {}
     |   expression()
     |   stringLiteral()
     |   empty()
+    |   boardAccess()
     )
 }
 
