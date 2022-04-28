@@ -342,8 +342,6 @@ public class CVisitor extends GriddyDefaultVisitor {
                 .append("]");
     }
 
-}
-
     public Object visit(ASTPlace node, Object data) {
         var out = (StringBuilder) data;
         var piece = node.jjtGetChild(0);
