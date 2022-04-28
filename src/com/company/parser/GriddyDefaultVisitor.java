@@ -20,6 +20,12 @@ public class GriddyDefaultVisitor implements GriddyVisitor{
   public Object visit(ASTGame node, Object data){
     return defaultVisit(node, data);
   }
+  public Object visit(ASTPlace node, Object data){
+    return defaultVisit(node, data);
+  }
+  public Object visit(ASTPosition node, Object data){
+    return defaultVisit(node, data);
+  }
   public Object visit(ASTBoard node, Object data){
     return defaultVisit(node, data);
   }

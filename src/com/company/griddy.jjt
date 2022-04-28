@@ -62,6 +62,7 @@ TOKEN : {
     |   < ELSE: "else"  >   // else statement
     |   < FROM: "from"  >   // get value 'from' board, e.g. '(x,y) from my_board'
     |   < ON:   "on"    >   // value exist on board, e.g. 'game_piece on my_board'
+    |   < AT:   "at"    >
     |   < IN:   "in"    >   // e.g. 'for x in iterable'
     |   < FOR:  "for"   >   // for loop begin
     |   < END:  "end"   >   // block end
@@ -72,6 +73,7 @@ TOKEN : {
     |   < BOARD_DECL:   "board" >   // board declaration token, e.g. 'board (n,m)'
     |   < PIECE_DECL:   "piece" >   // game piece declaration token, e.g. 'piece { ...props }'
     |   < GET:  "get"   >
+    |   < PLACE: "place"    >   // place pieces on a board
 }
 
 /* Punctuators */
@@ -158,6 +160,29 @@ void gameStmt() : {}
 {
         assignment() <SEMICOLON>
     |   outputStmt() <SEMICOLON>
+    |   placeStmt() <SEMICOLON>
+}
+
+void placeStmt() #Place : {}
+{
+    <PLACE> identifier() <ON> identifier() <AT> position()
+}
+
+ASTPosition position() #Position :
+{
+    Token x, y;
+    ArrayList<Integer> pos = new ArrayList<Integer>();
+}
+{
+    <LPAREN> x=<NUM> <COMMA> y=<NUM> <RPAREN>
+    {
+        pos.add(Integer.parseInt(x.image));
+        pos.add(Integer.parseInt(y.image));
+
+        jjtThis.jjtSetValue(pos);
+
+        return jjtThis;
+    }
 }
 
 void boardDeclaration() #Board :
@@ -202,7 +227,7 @@ void pieceDeclaration() #Piece :
     <PIECE_DECL> <LBRACE>
     (
         { Node k, v; }
-        k=identifier() <COLON> (v=expression() | v=stringLiteral())
+        k=identifier() <COLON> (v=number() | v=stringLiteral())
         {
             props.put(k, v);
             jjtThis.jjtSetValue(props);

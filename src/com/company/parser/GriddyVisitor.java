@@ -9,6 +9,8 @@ public interface GriddyVisitor
   public Object visit(ASTStart node, Object data);
   public Object visit(ASTSetup node, Object data);
   public Object visit(ASTGame node, Object data);
+  public Object visit(ASTPlace node, Object data);
+  public Object visit(ASTPosition node, Object data);
   public Object visit(ASTBoard node, Object data);
   public Object visit(ASTAccess node, Object data);
   public Object visit(ASTPosition node, Object data);

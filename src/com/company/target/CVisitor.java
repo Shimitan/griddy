@@ -28,7 +28,7 @@ public class CVisitor extends GriddyDefaultVisitor {
 
 
         output.append("\nint main(int argc, char *argv[]){\n"); // main begin.
-        output.append("\nstruct Piece { char* name; };\n struct Piece empty_piece;\nempty_piece.name = calloc(7, sizeof(char));\nstrcpy(empty_piece.name, \"_empty\");\n\n");
+        output.append("\nstruct Piece { char* name; unsigned int limit; unsigned int count; };\n struct Piece empty_piece;\nempty_piece.name = calloc(7, sizeof(char));\nstrcpy(empty_piece.name, \" \");\n\n");
 
         // Setup phase:
         node.jjtGetChild(0).jjtAccept(this, data);
@@ -75,22 +75,39 @@ public class CVisitor extends GriddyDefaultVisitor {
                 @SuppressWarnings("unchecked")
                 var boardSize = (ArrayList<Integer>)assocNode.jjtGetValue();
 
-                output.append("printf(\"+---\");\n".repeat(Math.max(0, boardSize.get(0))))
-                        .append("printf(\"+\\n\");\n");
+                output.append("printf(\"┌───\");\n")
+                        .append("printf(\"┬───\");\n".repeat(Math.max(0, boardSize.get(0) - 1)))
+                        .append("printf(\"┐\\n\");\n");
 
-                for (int y = 0; y < boardSize.get(1); y++) {
+                for (int y = boardSize.get(1); y > 0 ; y--) {
                     for (int x = 0; x < boardSize.get(0); x++) {
-                        output.append("printf(\"| %c \", *");
+                        output.append("printf(\"│ %c \", *");
                         arg.jjtAccept(this, data);
-                        output.append("[").append(y).append("][").append(x)
+                        output.append("[").append(y - 1).append("][").append(x)
                                 .append("]->name);\n");
                     }
-                    output.append("printf(\"|\\n\");\n")
-                            .append("printf(\"+---\");\n".repeat(Math.max(0, boardSize.get(0))))
-                            .append("printf(\"+\\n\");\n");
+
+                    output.append("printf(\"│ ")
+                            .append(y)
+                            .append("\\n\");\n");
+
+                    if (y > 1) {
+                        output.append("printf(\"├───\");\n")
+                                .append(("printf(\"┼───\");\n").repeat(Math.max(0, boardSize.get(0) - 1)))
+                                .append("printf(\"┤\\n\");\n");
+                    } else {
+                        output.append("printf(\"└───\");\n")
+                                .append(("printf(\"┴───\");\n").repeat(Math.max(0, boardSize.get(0) - 1)))
+                                .append("printf(\"┘\\n\");\n");
+                    }
                 }
 
-                yield output;
+                for (int x = 0; x < boardSize.get(0); x++)
+                    output.append("printf(\"  ")
+                            .append((char)('A' + x))
+                            .append(" \");\n");
+
+                yield output.append("printf(\"\\n\");\n");
             }
             default -> throw new RuntimeException("Can't echo value of unknown type");
         };
@@ -112,8 +129,8 @@ public class CVisitor extends GriddyDefaultVisitor {
         // n. } while (0 < i--);
 
         ((StringBuilder) data)
-                .append("/*  GAME    */\n")
-                .append("int i = 5;") // for testing while win condition is unimplemented.
+                .append("/*   GAME    */\n")
+                .append("int i = 5;\n") // for testing while win condition is unimplemented.
                 .append("do {\n");
 
         for (Node child : node.getChildren())
@@ -237,9 +254,13 @@ public class CVisitor extends GriddyDefaultVisitor {
                         output.append(";\n");
                     }
                 });
+
+                identNode.jjtAccept(this, data);
+                output.append(".count = 0;\n");
+
                 yield output;
             }
-            // 1. struct Piece board[height][width];
+            // 1. struct Piece *board[height][width];
             case "Board" -> {
                 @SuppressWarnings("unchecked")
                 var boardDim = (ArrayList<Integer>) valueNode.jjtGetValue();
@@ -323,4 +344,32 @@ public class CVisitor extends GriddyDefaultVisitor {
 
 }
 
+    public Object visit(ASTPlace node, Object data) {
+        var out = (StringBuilder) data;
+        var piece = node.jjtGetChild(0);
+        var board = node.jjtGetChild(1);
 
+        @SuppressWarnings("unchecked")
+        var pos = (ArrayList<Integer>) node.jjtGetChild(2).jjtGetValue();
+
+        out.append("if (");
+        piece.jjtAccept(this, data);
+        out.append(".count < ");
+        piece.jjtAccept(this, data);
+        out.append(".limit) {\n");
+
+        board.jjtAccept(this, data);
+        out.append("[")
+                .append(pos.get(1) - 1)
+                .append("][")
+                .append(pos.get(0) - 1)
+                .append("] = &");
+        piece.jjtAccept(this, data);
+        out.append(";\n");
+
+        piece.jjtAccept(this, data);
+        out.append(".count++;\n}\n");
+
+        return data;
+    }
+}
