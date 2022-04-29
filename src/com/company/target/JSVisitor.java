@@ -20,11 +20,11 @@ public class JSVisitor extends GriddyDefaultVisitor {
         output.append("\nfunction main(){\n"); // main begin.
 
         // Setup phase:
-        node.jjtGetChild(0).jjtAccept(this, data);
+        node.getChild(0).accept(this, data);
         output.append("\n");
 
         // Game phase:
-        node.jjtGetChild(1).jjtAccept(this, data);
+        node.getChild(1).accept(this, data);
 
         return output.append("\nreturn 0;\n}\n")
                 .append("if (require.main ===  module) {\nmain();\n}\n"); // main end.
@@ -33,21 +33,21 @@ public class JSVisitor extends GriddyDefaultVisitor {
     public Object visit(ASTOutput node, Object data) {
         var output = (StringBuilder) data;
 
-        var arg = node.jjtGetChild(0);
+        var arg = node.getChild(0);
         String argType = GriddyTreeConstants.jjtNodeName[arg.getId()];
 
         if (argType.equals("Ident")) {
-            ArrayList<Node> prevAssign = Util.getAssignedInScope(node, arg.jjtGetValue().toString());
+            ArrayList<Node> prevAssign = Util.getAssignedInScope(node, arg.getValue().toString());
             Node assocNode = prevAssign
                     .get(prevAssign.toArray().length - 1)
-                    .jjtGetChild(1);
+                    .getChild(1);
             argType = GriddyTreeConstants.jjtNodeName[assocNode.getId()];
         }
 
         return switch (argType) {
             case "Integer", "Expr", "String" -> {
                 output.append("console.log(");
-                arg.jjtAccept(this, data);
+                arg.accept(this, data);
                 yield output.append(");\n");
             }
             default -> throw new RuntimeException("Can't echo value of unknown type");
@@ -57,7 +57,7 @@ public class JSVisitor extends GriddyDefaultVisitor {
     public Object visit(ASTSetup node, Object data){
         ((StringBuilder) data).append("/*  SETUP   */\n");
         for (Node child : node.getChildren())
-            child.jjtAccept(this, data);
+            child.accept(this, data);
 
         return data;
     }
@@ -75,7 +75,7 @@ public class JSVisitor extends GriddyDefaultVisitor {
                 .append("do {\n");
 
         for (Node child : node.getChildren())
-            child.jjtAccept(this, data);
+            child.accept(this, data);
 
         ((StringBuilder) data).append("\n} while (0 < i--);");
 
@@ -92,19 +92,19 @@ public class JSVisitor extends GriddyDefaultVisitor {
     public Object visit(ASTAssign node, Object data) {
         var output = (StringBuilder) data;
 
-        Node identNode = node.jjtGetChild(0);
-        Node valueNode = node.jjtGetChild(1);
-        String ident = identNode.jjtGetValue().toString();
-        Object value = valueNode.jjtGetValue();
+        Node identNode = node.getChild(0);
+        Node valueNode = node.getChild(1);
+        String ident = identNode.getValue().toString();
+        Object value = valueNode.getValue();
         String valueType = GriddyTreeConstants.jjtNodeName[valueNode.getId()];
 
         // Generate code based on whether the identifier being assigned, has already been declared or not:
         if (Util.isDeclaredInScope(identNode, ident))
             return switch (valueType) {
                 case "String", "Integer", "Expr", "Bool" -> {
-                    identNode.jjtAccept(this, data);
+                    identNode.accept(this, data);
                     output.append(" = ");
-                    valueNode.jjtAccept(this, data);
+                    valueNode.accept(this, data);
                     yield output.append(";\n");
                 }
                 // NOTE: Board might not be re-assignable
@@ -115,9 +115,9 @@ public class JSVisitor extends GriddyDefaultVisitor {
         return switch (valueType) {
             case "String", "Integer", "Bool", "Expr" -> {
                 output.append("let ");
-                identNode.jjtAccept(this, data);
+                identNode.accept(this, data);
                 output.append(" = ");
-                valueNode.jjtAccept(this, data);
+                valueNode.accept(this, data);
                 yield output.append(";\n");
             }
             // TODO: Implement assignable board type.
@@ -130,30 +130,30 @@ public class JSVisitor extends GriddyDefaultVisitor {
         var output = (StringBuilder) data;
         output.append("(");
         for (Node c : node.getChildren())
-            c.jjtAccept(this, data);
+            c.accept(this, data);
         return output.append(")");
     }
 
     public Object visit(ASTOperator node, Object data) {
-        return ((StringBuilder) data).append(node.jjtGetValue());
+        return ((StringBuilder) data).append(node.getValue());
     }
 
     public Object visit(ASTString node, Object data) {
         return ((StringBuilder) data)
                 .append("\"")
-                .append(node.jjtGetValue())
+                .append(node.getValue())
                 .append("\"");
     }
 
     public Object visit(ASTIdent node, Object data) {
-        return ((StringBuilder) data).append(node.jjtGetValue());
+        return ((StringBuilder) data).append(node.getValue());
     }
 
     public Object visit(ASTInteger node, Object data) {
-        return ((StringBuilder) data).append(node.jjtGetValue());
+        return ((StringBuilder) data).append(node.getValue());
     }
 
     public Object visit(ASTBool node, Object data) {
-        return ((StringBuilder) data).append(node.jjtGetValue());
+        return ((StringBuilder) data).append(node.getValue());
     }
 }

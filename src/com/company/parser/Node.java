@@ -5,7 +5,7 @@ package com.company.parser;
    between nodes. */
 
 public interface Node {
-  Object jjtGetValue();
+  Object getValue();
 
   Node[] getChildren();
 
@@ -20,7 +20,7 @@ public interface Node {
   /** This pair of methods are used to inform the node of its
     parent. */
   void jjtSetParent(Node n);
-  Node jjtGetParent();
+  Node getParent();
 
   /** This method tells the node to add its argument to the node's
     list of children.  */
@@ -28,13 +28,13 @@ public interface Node {
 
   /** This method returns a child node.  The children are numbered
      from zero, left to right. */
-  Node jjtGetChild(int i);
+  Node getChild(int i);
 
   /** Return the number of children the node has. */
-  int jjtGetNumChildren();
+  int getNumChildren();
 
   int getId();
 
   /** Accept the visitor. **/
-  Object jjtAccept(GriddyVisitor visitor, Object data);
+  Object accept(GriddyVisitor visitor, Object data);
 }

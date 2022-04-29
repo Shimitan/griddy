@@ -31,7 +31,7 @@ public class Griddy {
                     case JS : v = new JSVisitor(); break;
                     default : v = new CVisitor(); break;
                 }
-                n.jjtAccept(v, output);
+                n.accept(v, output);
             }
         } catch (Exception e) {
             System.out.println("An error occurred.");
@@ -74,54 +74,50 @@ TOKEN : {
     |   < PIECE_DECL:   "piece" >   // game piece declaration token, e.g. 'piece { ...props }'
     |   < GET:  "get"   >
     |   < PLACE: "place"    >   // place pieces on a board
+    |   < NULL: "empty" >
 }
 
 /* Punctuators */
-<DEFAULT, IN_REGEX>
 TOKEN : {
-        < EQ:   "=="    > : DEFAULT // equal
-    |   < NEQ:  "!="    > : DEFAULT // 'not equal'
-    |   < GEQ:  ">="    > : DEFAULT // 'greater than or equal to'
-    |   < LEQ:  "<="    > : DEFAULT // 'less than or equal to'
-    |   < NOT:  "!"     > : DEFAULT // 'not' / 'negate'
-    |   < LT:   "<"     > : DEFAULT // 'less than'
-    |   < GT:   ">"     > : DEFAULT // 'greater than'
-    |   < AND:  "&&"    > : DEFAULT // logical 'and'
-    |   < OR:   "||"    > : DEFAULT // logical 'or'
-    |   < PLUS: "+"     > : DEFAULT // addition
-    |   < MINUS:"-"     > : DEFAULT // subtraction
-    |   < MULT: "*"     > : DEFAULT // multiplication
-    |   < DIV:  "/"     > : DEFAULT // division
-    |   < MOD:  "%"     > : DEFAULT // modulus
-    |   < INCR:  "++"   > : DEFAULT // increment
-    |   < DECR:  "--"   > : DEFAULT // decrement
-    |   < ASSIGN: "="   > : DEFAULT // variable assigment
-    |   < PLUS_ASSIGN:  "+="    > : DEFAULT // add and assign
-    |   < MINUS_ASSIGN: "-="    > : DEFAULT // subtract and assign
-    |   < MULT_ASSIGN:  "*="    > : DEFAULT // multiply and assign
-    |   < DIV_ASSIGN:   "/="    > : DEFAULT // divide and assign
-    |   < DOT:      "." > : DEFAULT     // dot (struct property access maybe?)
-    |   < COMMA:    "," > : DEFAULT     // seperator comma
-    |   < SEMICOLON: ";"> : DEFAULT     // statement endings
-    |   < COLON:    ":" > : DEFAULT     // property assignment
-    |   < LPAREN:   "(" > : DEFAULT     // left parenthesis
-    |   < RPAREN:   ")" > : IN_REGEX    // right parenthesis
-    |   < LBRACE:   "{" > : DEFAULT     // left curly bracket
-    |   < RBRACE:   "}" > : IN_REGEX    // right curly bracket
-    |   < LBRACKET: "[" > : DEFAULT     // left square bracket
-    |   < RBRACKET: "]" > : IN_REGEX    // right square bracket
+        < EQ:   "=="    >   // equal
+    |   < NEQ:  "!="    >   // 'not equal'
+    |   < GEQ:  ">="    >   // 'greater than or equal to'
+    |   < LEQ:  "<="    >   // 'less than or equal to'
+    |   < NOT:  "!"     >   // 'not' / 'negate'
+    |   < LT:   "<"     >   // 'less than'
+    |   < GT:   ">"     >   // 'greater than'
+    |   < AND:  "&&"    >   // logical 'and'
+    |   < OR:   "||"    >   // logical 'or'
+    |   < PLUS: "+"     >   // addition
+    |   < MINUS:"-"     >   // subtraction
+    |   < MULT: "*"     >   // multiplication
+    |   < DIV:  "/"     >   // division
+    |   < MOD:  "%"     >   // modulus
+    |   < INCR:  "++"   >   // increment
+    |   < DECR:  "--"   >   // decrement
+    |   < ASSIGN: "="   >   // variable assigment
+    |   < PLUS_ASSIGN:  "+="    >   // add and assign
+    |   < MINUS_ASSIGN: "-="    >   // subtract and assign
+    |   < MULT_ASSIGN:  "*="    >   // multiply and assign
+    |   < DIV_ASSIGN:   "/="    >   // divide and assign
+    |   < DOT:      "." >   // dot (struct property access maybe?)
+    |   < COMMA:    "," >   // seperator comma
+    |   < SEMICOLON: ";">   // statement endings
+    |   < COLON:    ":" >   // property assignment
+    |   < LPAREN:   "(" >   // left parenthesis
+    |   < RPAREN:   ")" >   // right parenthesis
+    |   < LBRACE:   "{" >   // left curly bracket
+    |   < RBRACE:   "}" >   // right curly bracket
+    |   < LBRACKET: "[" >   // left square bracket
+    |   < RBRACKET: "]" >   // right square bracket
 }
 
 /* Literals (terminals) */
-<DEFAULT, IN_REGEX>
 TOKEN : {
-        < BOOL: "true" | "false"    > : IN_REGEX
-    |   < NULL: "empty number" | "empty string" > : DEFAULT
-    |   < NULL_NUM: "number" > : DEFAULT
-    |   < NULL_STR: "string" > : DEFAULT
-    |   < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])+  > : DEFAULT
-    |   < NEG_NUM:  "-" <NUM>   > : DEFAULT
-    |   < STRING:  "\"" (~["\"","\r","\n"])* "\"" > : DEFAULT // string literal
+        < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])+  >
+    |   < BOOL: "true" | "false"    >
+    |   < NEG_NUM:  "-" <NUM>   >
+    |   < STRING:  "\"" (~["\"","\r","\n"])* "\"" > // string literal
 }
 
 /* Identifier (terminals) */
@@ -139,7 +135,7 @@ ASTStart Start() #Start : {}
     { return jjtThis; }
 }
 
-void setupPhase() #Setup : {}
+void setupPhase() : {}
 {
     <GAME_SETUP>
     (setupStmt())*
@@ -168,21 +164,9 @@ void placeStmt() #Place : {}
     <PLACE> identifier() <ON> identifier() <AT> position()
 }
 
-ASTPosition position() #Position :
+void position() #Position : { }
 {
-    Token x, y;
-    ArrayList<Integer> pos = new ArrayList<Integer>();
-}
-{
-    <LPAREN> x=<NUM> <COMMA> y=<NUM> <RPAREN>
-    {
-        pos.add(Integer.parseInt(x.image));
-        pos.add(Integer.parseInt(y.image));
-
-        jjtThis.jjtSetValue(pos);
-
-        return jjtThis;
-    }
+    <LPAREN> number() <COMMA> number() <RPAREN>
 }
 
 void boardDeclaration() #Board :
@@ -193,10 +177,10 @@ void boardDeclaration() #Board :
 {
     <BOARD_DECL> <LPAREN> a=<NUM> <COMMA> b=<NUM> <RPAREN>
     {
-        boardSize.add(Integer.parseInt(a.image));
-        boardSize.add(Integer.parseInt(b.image));
-        jjtThis.jjtSetValue(boardSize);
-    }
+    boardSize.add(Integer.parseInt(a.image));
+    boardSize.add(Integer.parseInt(b.image));
+    jjtThis.setValue(boardSize);
+}
 }
 
 void boardAccess() #Access  : { }
@@ -209,27 +193,28 @@ void pieceDeclaration() #Piece :
     HashMap<Node, Node> props = new HashMap<Node, Node>();
 }
 {
-    <PIECE_DECL> <LBRACE>
+    <PIECE_DECL>
     (
         { Node k, v; }
         k=identifier() <COLON> (v=number() | v=stringLiteral())
         {
             props.put(k, v);
-            jjtThis.jjtSetValue(props);
+            jjtThis.setValue(props);
         }
-    )*
-    <RBRACE>
+    )+
+    <END>
 }
 
 void assignment() #Assign : {}
 {
     identifier() <ASSIGN>
-    (   boardDeclaration()
-    |   pieceDeclaration()
+    (   LOOKAHEAD( boardAccess() )
+        boardAccess()
     |   expression()
+    |   boardDeclaration()
+    |   pieceDeclaration()
     |   stringLiteral()
     |   empty()
-    |   boardAccess()
     )
 }
 
@@ -238,17 +223,16 @@ ASTEmpty empty() #Empty :
     Token t;
 }
 {
-    t=<NULL>
+    <NULL> t=<IDENT>
     {
-        jjtThis.jjtSetValue(t.image);
+        jjtThis.setValue(t.image);
         return jjtThis;
     }
 }
 
-ASTExpr expression() #Expr(>1) : {}
+void expression() #Expr(>1) : {}
 {
-    multiplicativeExpr() ( ( additiveOperator() | booleanOperator() ) multiplicativeExpr() )*
-    { return jjtThis; }
+    multiplicativeExpr() [ ( additiveOperator() | booleanOperator() ) multiplicativeExpr() ]
 }
 
 ASTOperator additiveOperator() #Operator :
@@ -256,16 +240,16 @@ ASTOperator additiveOperator() #Operator :
     Token t;
 }
 {
-    (t=<PLUS> | t=<MINUS>)
+    ( t=<PLUS> | t=<MINUS> )
     {
-        jjtThis.jjtSetValue(t.image);
+        jjtThis.setValue(t.image);
         return jjtThis;
     }
 }
 
 void multiplicativeExpr() #Expr(>1) : {}
 {
-    unary() ( multiplicativeOperator() unary() )*
+    unary() [ multiplicativeOperator() unary() ]
 }
 
 ASTOperator multiplicativeOperator() #Operator :
@@ -275,7 +259,7 @@ ASTOperator multiplicativeOperator() #Operator :
 {
     (t=<MULT> | t=<DIV> | t=<MOD>)
     {
-        jjtThis.jjtSetValue(t.image);
+        jjtThis.setValue(t.image);
         return jjtThis;
     }
 }
@@ -283,7 +267,12 @@ ASTOperator multiplicativeOperator() #Operator :
 void unary() : {}
 {
         <LPAREN> expression() <RPAREN>
-    |   number()
+    |   primary()
+}
+
+void primary() : {}
+{
+        number()
     |   bool()
     |   identifier()
 }
@@ -302,7 +291,7 @@ ASTOperator booleanOperator() #Operator :
     |  t=<OR>
     )
     {
-        jjtThis.jjtSetValue(t.image);
+        jjtThis.setValue(t.image);
         return jjtThis;
     }
 }
@@ -314,7 +303,7 @@ ASTIdent identifier() #Ident :
 {
     t=<IDENT>
     {
-        jjtThis.jjtSetValue(t.image);
+        jjtThis.setValue(t.image);
         return jjtThis;
     }
 }
@@ -326,21 +315,18 @@ ASTInteger number() #Integer :
 {
     t=<NUM>
     {
-        jjtThis.jjtSetValue(Integer.parseInt(t.image));
+        jjtThis.setValue(Integer.parseInt(t.image));
         return jjtThis;
     }
 }
 
-ASTBool bool() #Bool :
+void bool() #Boolean :
 {
     Token t;
 }
 {
     t=<BOOL>
-    {
-        jjtThis.jjtSetValue(t.image);
-        return jjtThis;
-    }
+    { jjtThis.setValue(t.image); }
 }
 
 ASTString stringLiteral() #String :
@@ -350,15 +336,12 @@ ASTString stringLiteral() #String :
 {
     t=<STRING>
     {
-        jjtThis.jjtSetValue(t.image.substring(1, (t.image.length() - 1)));
+        jjtThis.setValue(t.image.substring(1, (t.image.length() - 1)));
         return jjtThis;
     }
 }
 
-ASTOutput outputStmt() #Output : {}
+void outputStmt() #Output : {}
 {
     <OUTPUT> ( expression() | stringLiteral() )
-    {
-        return jjtThis;
-    }
 }

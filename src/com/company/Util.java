@@ -3,12 +3,9 @@ package com.company;
 import com.company.parser.GriddyTreeConstants;
 import com.company.parser.Node;
 
-import javax.management.remote.TargetedNotification;
-import javax.swing.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Locale;
 
 public class Util {
     /**
@@ -18,21 +15,19 @@ public class Util {
      * @return status
      */
     public static boolean isDeclaredInScope(Node node, String name) {
-        if (node.jjtGetParent() == null) return false;
+        if (node.getParent() == null) return false;
 
-        for (Node c : node.jjtGetParent().getChildren()) {
+        for (Node c : node.getParent().getChildren()) {
             if (c == node) break;
 
             if (GriddyTreeConstants.jjtNodeName[c.getId()].equals("Assign")) {
-                if (c.jjtGetChild(0).jjtGetValue().equals(name))
+                if (c.getChild(0).getValue().equals(name))
                     return true;
             }
         }
 
-        return isDeclaredInScope(node.jjtGetParent(), name);
+        return isDeclaredInScope(node.getParent(), name);
     }
-
-
 
     /**
      * Get all previous assignments of identifier name.
@@ -43,53 +38,61 @@ public class Util {
     public static ArrayList<Node> getAssignedInScope(Node node, String name) {
         var output = new ArrayList<Node>();
 
-        if (node.jjtGetParent() != null)
-            for (Node c : node.jjtGetParent().getChildren()) {
+        if (node.getParent() != null)
+            for (Node c : node.getParent().getChildren()) {
                 if (c == node) break;
 
                 if (GriddyTreeConstants.jjtNodeName[c.getId()].equals("Assign")
-                        && c.jjtGetChild(0).jjtGetValue().equals(name)
+                        && c.getChild(0).getValue().equals(name)
                 ) output.add(c);
-                else output.addAll(getAssignedInScope(node.jjtGetParent(), name));
+                else output.addAll(getAssignedInScope(node.getParent(), name));
             }
 
         return output;
     }
 
-    public static void cli(String args[], FileInputStream inputStream, FileOutputStream outputStream, StringBuilder output) {
-        cliFlags flags = new cliFlags();
+    public static void cli(String[] args, StringBuilder output) {
+        CLI_Flags flags = new CLI_Flags();
         cli(args, flags, 0);
 
+        // Print help message if help flag is set:
         if (flags.help) {
-            System.out.println("help is near but not here... yet");
+            System.out.println("""
+                    Available args:
+                        -h, --help                  =>  Display help message.
+                        -f <path>, --file <path>    =>  Set input filepath (required).
+                        -o <path>, --output <path>  =>  Set output filepath.
+                        -t <target>, --target <target>  =>  Set compilation target (default = C).
+                        --tree                      =>  Dump AST to stdout.
+                        
+                    Compilation targets:
+                        C   =>  C kode compatible with GCC version 11.
+                        JS  =>  JavaScript for usage with Node.js.
+                    """);
             return;
         }
 
-        if (flags.file == null) {
-            throw new RuntimeException("no input file given");
-        }
+        if (flags.file == null) throw new RuntimeException("Missing input filepath.");
 
+        FileInputStream inputStream;
         try {
             inputStream = new FileInputStream(flags.file);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
 
-        Griddy.main(flags.target, flags.tree, inputStream, output);
-        File outFile = new File(flags.output != null? flags.output: (flags.target != Target.JS? flags.file+".c": flags.file+".js"));
-        try {
-            outFile.createNewFile();
-            outputStream = new FileOutputStream(outFile);
-            outputStream.write(output.toString().getBytes(StandardCharsets.UTF_8));
+            Griddy.main(flags.target, flags.tree, inputStream, output);
+            File outFile = new File(flags.output != null? flags.output: (flags.target != Target.JS? flags.file+".c": flags.file+".js"));
+
+            if (outFile.createNewFile()) System.out.println("File '" + outFile.getName() + "' successfully created!");
+
+            try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
+                outputStream.write(output.toString().getBytes(StandardCharsets.UTF_8));
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        if (inputStream != null)
-            System.out.println(output); //delete later
     }
 
-    public static class cliFlags {
+    public static class CLI_Flags {
         boolean help = false;
         String file = null;
         String output = null;
@@ -97,7 +100,7 @@ public class Util {
         Target target = Target.C;
     }
 
-    protected static void cli(String args[], cliFlags flags, int i) {
+    protected static void cli(String[] args, CLI_Flags flags, int i) {
         if(args.length < 1) return;
 
         switch (args[i]) {
@@ -141,6 +144,4 @@ public class Util {
             }
         }
     }
-
-
 }
