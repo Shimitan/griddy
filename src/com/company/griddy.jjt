@@ -7,6 +7,7 @@ options {
     LOOKAHEAD = 1;
     NODE_DEFAULT_VOID = true;
     JDK_VERSION = "17.0";
+    STATIC = true;
 }
 
 PARSER_BEGIN(Griddy)
@@ -31,7 +32,7 @@ public class Griddy {
                     case JS : v = new JSVisitor(); break;
                     default : v = new CVisitor(); break;
                 }
-                n.accept(v, output);
+                n.jjtAccept(v, output);
             }
         } catch (Exception e) {
             System.out.println("An error occurred.");
