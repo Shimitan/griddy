@@ -21,7 +21,7 @@ public class Util {
             if (c == node) break;
 
             if (GriddyTreeConstants.jjtNodeName[c.getId()].equals("Assign")) {
-                if (c.getChild(0).getValue().equals(name))
+                if (c.jjtGetChild(0).jjtGetValue().equals(name))
                     return true;
             }
         }
@@ -43,7 +43,7 @@ public class Util {
                 if (c == node) break;
 
                 if (GriddyTreeConstants.jjtNodeName[c.getId()].equals("Assign")
-                        && c.getChild(0).getValue().equals(name)
+                        && c.jjtGetChild(0).jjtGetValue().equals(name)
                 ) output.add(c);
                 else output.addAll(getAssignedInScope(node.getParent(), name));
             }

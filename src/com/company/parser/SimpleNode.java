@@ -40,7 +40,7 @@ class SimpleNode implements Node {
     children[i] = n;
   }
 
-  public Node getChild(int i) {
+  public Node jjtGetChild(int i) {
     return this.children[i];
   }
 
@@ -53,10 +53,10 @@ class SimpleNode implements Node {
   }
 
   public void setValue(Object value) { this.value = value; }
-  public Object getValue() { return this.value; }
+  public Object jjtGetValue() { return this.value; }
 
   /** Accept the visitor. **/
-  public Object accept(GriddyVisitor visitor, Object data)
+  public Object jjtAccept(GriddyVisitor visitor, Object data)
 {
     return visitor.visit(this, data);
   }
@@ -66,7 +66,7 @@ class SimpleNode implements Node {
 {
     if (this.children != null) {
       for (Node child : this.children) {
-        child.accept(visitor, data);
+        child.jjtAccept(visitor, data);
       }
     }
     return data;
