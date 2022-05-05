@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+}
+
+group 'com.company'
+version '0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+    }
+    test {
+        java {
+            srcDirs = ['Test']
+        }
+    }
+}
+dependencies {
+    testImplementation(platform("org.junit:junit-bom:5.8.2"))
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher") {
+        because("Only needed to run tests in a version of IntelliJ IDEA that bundles older versions")
+    }
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
+}
+
+test {
+    useJUnitPlatform()
+}

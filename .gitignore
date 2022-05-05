@@ -43,3 +43,8 @@ src/com/company/parser/GriddyVisitor.java
 
 */**/*.griddy.c
 test.c
+
+build
+gradle
+gradlew
+gradlew.bat
