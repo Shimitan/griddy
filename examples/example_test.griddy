@@ -1,0 +1,5 @@
+SETUP
+    a = 10;
+
+GAME
+    output 3;

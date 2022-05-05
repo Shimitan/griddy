@@ -55,8 +55,9 @@ public class CVisitor extends GriddyDefaultVisitor {
 
         if (argType.equals("Ident")) {
             ArrayList<Node> prevAssign = Util.getAssignedInScope(node, arg.jjtGetValue().toString());
+            if (prevAssign.isEmpty()) throw new RuntimeException("Identifier '" + arg.jjtGetValue() + "' unknown.");
             assocNode = prevAssign
-                    .get(prevAssign.toArray().length - 1)
+                    .get(prevAssign.size() - 1)
                     .jjtGetChild(1);
             argType = GriddyTreeConstants.jjtNodeName[assocNode.getId()];
         }
