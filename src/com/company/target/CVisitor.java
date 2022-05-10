@@ -131,7 +131,7 @@ public class CVisitor extends GriddyDefaultVisitor {
         // n. } while (0 < i--);
 
         ((StringBuilder) data)
-                .append("/*   GAME    */\n")
+                .append("\n/*   GAME    */\n")
                 .append("int i = 5;\n") // for testing while win condition is unimplemented.
                 .append("do {\n");
 
@@ -388,5 +388,49 @@ public class CVisitor extends GriddyDefaultVisitor {
         out.append(".count++;\n}\n");
 
         return data;
+    }
+
+
+    public Object visit(ASTInput node, Object data){
+        var output = (StringBuilder) data;
+        var type = (String) node.jjtGetValue();
+        var arg = node.jjtGetChild(0);
+        String argType = GriddyTreeConstants.jjtNodeName[arg.getId()];
+        Node assocNode = null;
+
+        ArrayList<Node> prevAssign = Util.getAssignedInScope(node, arg.jjtGetValue().toString());
+        if (prevAssign.isEmpty()) throw new RuntimeException("Identifier '" + arg.jjtGetValue() + "' unknown.");
+        assocNode = prevAssign
+                .get(prevAssign.size() - 1)
+                .jjtGetChild(1);
+        argType = GriddyTreeConstants.jjtNodeName[assocNode.getId()];
+
+
+        return switch (argType) {
+            case "Integer", "Expr", "Boolean" -> {
+                output.append("scanf(\"%d\", &");
+                arg.jjtAccept(this, data);
+                yield output.append(");\n");
+            }
+            case "String" -> {
+                output.append("scanf(\"%s\", &");
+                arg.jjtAccept(this, data);
+                yield output.append(");\n");
+            }
+            case "Piece", "Access" -> {
+                output.append("scanf(\"%s\", &");
+                arg.jjtAccept(this, data);
+                yield output.append(".name")
+                        .append(");\n");
+            }
+            default -> throw new RuntimeException("Can't scan value of unknown type: " + argType);
+        };
+        /*
+        if ("place".equals(identType)) {
+
+        } else {
+            throw new RuntimeException("Encountered invalid value type in assignment: " + identNode);
+        }
+        return data;*/
     }
 }
