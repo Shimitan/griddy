@@ -323,4 +323,37 @@ public class CVisitor extends GriddyDefaultVisitor {
 
         return data;
     }
+  
+    public Object visit(ASTInput node, Object data){
+        var output = (StringBuilder) data;
+        var arg = node.jjtGetChild(0);
+        Node assocNode;
+
+        ArrayList<Node> prevAssign = Util.getAssignedInScope(node, arg.jjtGetValue().toString());
+        if (prevAssign.isEmpty()) throw new RuntimeException("Identifier '" + arg.jjtGetValue() + "' unknown.");
+        assocNode = prevAssign
+                .get(prevAssign.size() - 1)
+                .jjtGetChild(1);
+        String argType = GriddyTreeConstants.jjtNodeName[assocNode.getId()];
+        
+        return switch (argType) {
+            case "Integer", "Expr", "Boolean" -> {
+                output.append("scanf(\"%d\", &");
+                arg.jjtAccept(this, data);
+                yield output.append(");\n");
+            }
+            case "String" -> {
+                output.append("scanf(\"%s\", &");
+                arg.jjtAccept(this, data);
+                yield output.append(");\n");
+            }
+            case "Piece", "Access" -> {
+                output.append("scanf(\"%s\", &");
+                arg.jjtAccept(this, data);
+                yield output.append(".name")
+                        .append(");\n");
+            }
+            default -> throw new RuntimeException("Can't scan value of unknown type: " + argType);
+        };
+    }
 }
