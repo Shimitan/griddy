@@ -68,6 +68,7 @@ TOKEN : {
     |   < FOR:  "for"   >   // for loop begin
     |   < END:  "end"   >   // block end
     |   < OUTPUT: "output"  >   // prints the output
+    |   < INPUT: "input"    >   // scans the user input
     |   < GAME_SETUP:   "SETUP" >   // setup phase begin
     |   < GAME_MAIN:    "GAME"  >   // game phase begin
     |   < FUNC_DECL:    "fun"   >   // function declaration
@@ -158,6 +159,7 @@ void gameStmt() : {}
         assignment() <SEMICOLON>
     |   outputStmt() <SEMICOLON>
     |   placeStmt() <SEMICOLON>
+    |   inputStmt() <SEMICOLON>
 }
 
 void placeStmt() #Place : {}
@@ -345,4 +347,9 @@ ASTString stringLiteral() #String :
 void outputStmt() #Output : {}
 {
     <OUTPUT> ( expression() | stringLiteral() )
+}
+
+void inputStmt() #Input : {}
+{
+    <INPUT> expression()
 }
