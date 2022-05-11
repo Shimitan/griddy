@@ -63,12 +63,18 @@ public class Util {
                         -f <path>, --file <path>    =>  Set input filepath (required).
                         -o <path>, --output <path>  =>  Set output filepath.
                         -t <target>, --target <target>  =>  Set compilation target (default = C).
+                        -c, --compile               =>  Compile output with gcc (target: C).
                         --tree                      =>  Dump AST to stdout.
                         
                     Compilation targets:
                         C   =>  C kode compatible with GCC version 11.
                         JS  =>  JavaScript for usage with Node.js.
                     """);
+            return;
+        }
+
+        if (flags.compile && flags.target != Target.C) {
+            System.out.println("Wrong usage: '-c/--compile' option only valid for 'C' target.");
             return;
         }
 
@@ -79,12 +85,20 @@ public class Util {
             inputStream = new FileInputStream(flags.file);
 
             Griddy.main(flags.target, flags.tree, inputStream, output);
-            File outFile = new File(flags.output != null? flags.output: (flags.target != Target.JS? flags.file+".c": flags.file+".js"));
+            File outFile = new File(flags.output != null
+                    ? flags.output
+                    : (flags.target != Target.JS  ? flags.file+".c" : flags.file+".js"));
 
             if (outFile.createNewFile()) System.out.println("File '" + outFile.getName() + "' successfully created!");
 
             try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
                 outputStream.write(output.toString().getBytes(StandardCharsets.UTF_8));
+            }
+
+            if (flags.compile) {
+                Runtime runtime = Runtime.getRuntime();
+                String[] cmdArgs = {"gcc", outFile.getPath()};
+                runtime.exec(cmdArgs);
             }
 
         } catch (IOException e) {
@@ -98,6 +112,7 @@ public class Util {
         String output = null;
         boolean tree = false;
         Target target = Target.C;
+        boolean compile = false;
     }
 
     protected static void cli(String[] args, CLI_Flags flags, int i) {
@@ -129,7 +144,7 @@ public class Util {
                     cli(args, flags, i+1);
             }
             case "-t", "--target" -> {
-                if(args[i+1].equalsIgnoreCase("c")){
+                if (args[i+1].equalsIgnoreCase("c")){
                     flags.target = Target.C;
                 }else if(args[i+1].equalsIgnoreCase("js")){
                     flags.target = Target.JS;
@@ -138,10 +153,24 @@ public class Util {
                 if(i+3 <= args.length)
                     cli(args, flags, i+2);
             }
+            case "-c", "--compile" -> {
+                flags.compile = true;
+                if (i+2 <= args.length)
+                    cli(args, flags, i+1);
+            }
             default -> {
                 System.out.println("Unknown argument: " + args[i]);
                 System.out.println("type -h or --help for help");
             }
         }
+    }
+
+    public static int[] range(int begin, int end) {
+        int[] arr = new int[(end + 1) - begin];
+
+        for (int i = 0; i < end; i++)
+            arr[i] = i + begin;
+
+        return arr;
     }
 }

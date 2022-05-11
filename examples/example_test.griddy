@@ -1,5 +1,18 @@
-SETUP
-    a = 10;
+# example_test.griddy
+
+board (3, 5);
+
+piece p_x
+    name: "X"
+    limit: 3
+    StartPosition: (3, 1)
+end
+
+piece p_o
+    name: "O"
+    limit: 3
+    StartPosition: (1, 1)
+end
 
 GAME
-    output 3;
+    output @board;

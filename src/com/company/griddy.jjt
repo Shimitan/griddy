@@ -123,7 +123,7 @@ TOKEN : {
 
 /* Identifier (terminals) */
 TOKEN : {
-        < IDENT:        <IDENT_PART> (<IDENT_PART>)* >
+        < IDENT:        (<LETTER> | "@") (<IDENT_PART>)* >
     |   < #IDENT_PART:  (<LETTER> | "_")+ >
     |   < #LETTER:      ["a"-"z","A"-"Z"] >
 }
@@ -138,19 +138,20 @@ ASTStart Start() #Start : {}
 
 void setupPhase() : {}
 {
-    <GAME_SETUP>
-    (setupStmt())*
+    ( setupStmt() )*
 }
 
 void setupStmt() : {}
 {
         assignment() <SEMICOLON>
+    |   pieceDeclaration()
+    |   boardDeclaration() <SEMICOLON>
 }
 
 void gamePhase() #Game : {}
 {
     <GAME_MAIN>
-    (gameStmt())+
+    ( gameStmt() )*
 }
 
 void gameStmt() : {}
@@ -165,23 +166,15 @@ void placeStmt() #Place : {}
     <PLACE> identifier() <ON> identifier() <AT> position()
 }
 
-void position() #Position : { }
+ASTPosition position() #Position : { }
 {
     <LPAREN> number() <COMMA> number() <RPAREN>
+    { return jjtThis; }
 }
 
-void boardDeclaration() #Board :
+void boardDeclaration() #Board : {}
 {
-    Token a, b;
-    ArrayList<Integer> boardSize = new ArrayList<Integer>();
-}
-{
-    <BOARD_DECL> <LPAREN> a=<NUM> <COMMA> b=<NUM> <RPAREN>
-    {
-    boardSize.add(Integer.parseInt(a.image));
-    boardSize.add(Integer.parseInt(b.image));
-    jjtThis.setValue(boardSize);
-}
+    <BOARD_DECL> position()
 }
 
 void boardAccess() #Access  : { }
@@ -189,21 +182,22 @@ void boardAccess() #Access  : { }
      position() <ON> identifier()
 }
 
-void pieceDeclaration() #Piece :
+ASTPiece pieceDeclaration() #Piece :
 {
-    HashMap<Node, Node> props = new HashMap<Node, Node>();
+    HashMap<String, Node> props = new HashMap<String, Node>();
 }
 {
-    <PIECE_DECL>
+    <PIECE_DECL> identifier()
     (
         { Node k, v; }
-        k=identifier() <COLON> (v=number() | v=stringLiteral())
+        k=identifier() <COLON> ( v=number() | v=stringLiteral() | v=position() )
         {
-            props.put(k, v);
-            jjtThis.setValue(props);
+            props.put((String) k.jjtGetValue(), v);
+            jjtThis.jjtSetValue(props);
         }
     )+
     <END>
+    { jjtThis.jjtSetValue(props); return jjtThis; }
 }
 
 void assignment() #Assign : {}
@@ -214,7 +208,6 @@ void assignment() #Assign : {}
     |   expression()
     |   boardDeclaration()
     |   pieceDeclaration()
-    |   stringLiteral()
     |   empty()
     )
 }
@@ -226,7 +219,7 @@ ASTEmpty empty() #Empty :
 {
     <NULL> t=<IDENT>
     {
-        jjtThis.setValue(t.image);
+        jjtThis.jjtSetValue(t.image);
         return jjtThis;
     }
 }
@@ -243,7 +236,7 @@ ASTOperator additiveOperator() #Operator :
 {
     ( t=<PLUS> | t=<MINUS> )
     {
-        jjtThis.setValue(t.image);
+        jjtThis.jjtSetValue(t.image);
         return jjtThis;
     }
 }
@@ -260,7 +253,7 @@ ASTOperator multiplicativeOperator() #Operator :
 {
     (t=<MULT> | t=<DIV> | t=<MOD>)
     {
-        jjtThis.setValue(t.image);
+        jjtThis.jjtSetValue(t.image);
         return jjtThis;
     }
 }
@@ -275,6 +268,7 @@ void primary() : {}
 {
         number()
     |   bool()
+    |   stringLiteral()
     |   identifier()
 }
 
@@ -292,7 +286,7 @@ ASTOperator booleanOperator() #Operator :
     |  t=<OR>
     )
     {
-        jjtThis.setValue(t.image);
+        jjtThis.jjtSetValue(t.image);
         return jjtThis;
     }
 }
@@ -304,7 +298,7 @@ ASTIdent identifier() #Ident :
 {
     t=<IDENT>
     {
-        jjtThis.setValue(t.image);
+        jjtThis.jjtSetValue(t.image);
         return jjtThis;
     }
 }
@@ -316,7 +310,7 @@ ASTInteger number() #Integer :
 {
     t=<NUM>
     {
-        jjtThis.setValue(Integer.parseInt(t.image));
+        jjtThis.jjtSetValue(Integer.parseInt(t.image));
         return jjtThis;
     }
 }
@@ -327,7 +321,7 @@ void bool() #Boolean :
 }
 {
     t=<BOOL>
-    { jjtThis.setValue(t.image); }
+    { jjtThis.jjtSetValue(t.image); }
 }
 
 ASTString stringLiteral() #String :
@@ -337,12 +331,12 @@ ASTString stringLiteral() #String :
 {
     t=<STRING>
     {
-        jjtThis.setValue(t.image.substring(1, (t.image.length() - 1)));
+        jjtThis.jjtSetValue(t.image.substring(1, (t.image.length() - 1)));
         return jjtThis;
     }
 }
 
 void outputStmt() #Output : {}
 {
-    <OUTPUT> ( expression() | stringLiteral() )
+    <OUTPUT> expression()
 }
