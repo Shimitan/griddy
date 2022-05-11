@@ -52,7 +52,7 @@ class SimpleNode implements Node {
     return (this.children == null) ? 0 : this.children.length;
   }
 
-  public void setValue(Object value) { this.value = value; }
+  public void jjtSetValue(Object value) { this.value = value; }
   public Object jjtGetValue() { return this.value; }
 
   /** Accept the visitor. **/
