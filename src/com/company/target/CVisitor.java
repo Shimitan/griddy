@@ -62,7 +62,7 @@ public class CVisitor extends GriddyDefaultVisitor {
         if (argType.equals("String")) {
             ident = "\"" + ident + "\"";
 
-        } else if (argType.equals("Ident") && ident.startsWith("_")) {
+        } else if (argType.equals("Ident") && (ident.startsWith("_") || ident.startsWith("@"))) {
             argType = getGriddyGlobalType.apply(ident.replaceFirst("_", "@"));
             ident = getGriddyGlobal.apply(ident);
 

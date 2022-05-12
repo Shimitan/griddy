@@ -1,6 +1,6 @@
 # example_test.griddy
 
-board (3, 5);
+board (3, 6);
 
 piece p_x
     name: "X"
@@ -43,7 +43,7 @@ fun ask_for_number ()
     end
 return 0
 
-GAME ( (50 > user_input) || (user_input > 100) )
-    #output @board;
+GAME 0 #( (50 > user_input) || (user_input > 100) )
+    output @board;
 
-    ask_for_number();
+    #ask_for_number();
