@@ -54,22 +54,24 @@ public class TargetC implements TargetFormat {
         }
 
         return out.append("};\n")
+                .append("""
+                    struct Player _current_player;
+                    int _turn_count = 0;
+                    """)
                 .append(setupStruct.body.toString())
                 .toString();
     }
 
-    public String formatGame(String body) {
+    public String formatGame(String body, String winCond) {
         return """
         /*   GAME    */
-        struct Player _current_player;
-        int _turn_count = 0;
         do {
         """
         + body
         + """
-        } while (0);
-        
-        """;
+        _turn_count++;
+        } while ("""
+        + winCond + ");\n\n";
     }
 
     public String format(SetupStruct setupStruct, GameStruct gameStruct) {
@@ -133,5 +135,13 @@ public class TargetC implements TargetFormat {
                 + "if (" + h + " != _i + 1) printf(\"├───" + "┼───".repeat(Math.max(0, w - 1)) + "┤\\n\");\n}\n"
                 + "printf(\"└───" + "┴───".repeat(Math.max(0, w - 1)) + "┘\\n\");\n"
                 + "printf(\"" + numberRow + "\\n\");\n";
+    }
+
+    public String condStmt(String condition, String body) {
+        return "if (" + condition + ")\n" + body;
+    }
+
+    public String condElse(String body) {
+        return "else\n" + body;
     }
 }

@@ -22,6 +22,7 @@ public class CVisitor extends GriddyDefaultVisitor {
             case "@player2" -> "_p2";
             case "@board" -> "_board";
             case "@current_player" -> "_current_player";
+            case "@turn_count" -> "_turn_count";
             default -> throw new RuntimeException("Unknown identifier: '" + k + "'");
     };
 
@@ -42,7 +43,7 @@ public class CVisitor extends GriddyDefaultVisitor {
     public Object visit(ASTStart node, Object data){
         var output = (StringBuilder) data;
 
-        node.childrenAccept(this, data);
+        node.childrenAccept(this, generator.setupStruct.body);
 
         return output.append(generator);
     }
@@ -61,17 +62,12 @@ public class CVisitor extends GriddyDefaultVisitor {
         if (argType.equals("String")) {
             ident = "\"" + ident + "\"";
 
-        } else if (argType.equals("Ident") && ident.startsWith("@")) {
-            argType = getGriddyGlobalType.apply(ident);
+        } else if (argType.equals("Ident") && ident.startsWith("_")) {
+            argType = getGriddyGlobalType.apply(ident.replaceFirst("_", "@"));
             ident = getGriddyGlobal.apply(ident);
 
         } else if (argType.equals("Ident")) {
-            ArrayList<Node> prevAssign = Util.getAssignedInScope(node, ident);
-            if (prevAssign.isEmpty()) throw new RuntimeException("Identifier '" + ident + "' unknown.");
-            assocNode = prevAssign
-                    .get(prevAssign.size() - 1)
-                    .jjtGetChild(1);
-            argType = GriddyTreeConstants.jjtNodeName[assocNode.getId()];
+            argType = Util.getIdentifierType(node, ident);
         }
 
         return switch (argType) {
@@ -96,12 +92,13 @@ public class CVisitor extends GriddyDefaultVisitor {
 
     @Override
     public Object visit(ASTGame node, Object data){
-        // 1. /*  GAME    */
-        // 2. int i = 5;
-        // 3. do {
-        // ...
-        // n. } while (0 < i--);
-        node.childrenAccept(this, generator.gameStruct.body);
+        var winCond = new StringBuilder();
+        node.jjtGetChild(0).jjtAccept(this, winCond);
+        generator.gameStruct.winCondition = winCond.toString();
+
+        for (int i = 1; i < node.getNumChildren(); i++)
+            node.jjtGetChild(i).jjtAccept(this, generator.gameStruct.body);
+
         return data;
     }
 
@@ -133,8 +130,13 @@ public class CVisitor extends GriddyDefaultVisitor {
             ident = getGriddyGlobal.apply(ident);
         }
 
-        if (valueType.equals("Ident") && value.toString().startsWith("@")) {
-            value = getGriddyGlobal.apply(value.toString());
+
+        if (valueType.equals("Ident")) {
+            if (value.toString().startsWith("@")) {
+                value = getGriddyGlobal.apply(value.toString());
+            } else {
+                valueType = Util.getIdentifierType(node, value.toString());
+            }
         }
 
         // Generate code based on whether the identifier being assigned, has already been declared or not:
@@ -161,8 +163,12 @@ public class CVisitor extends GriddyDefaultVisitor {
                         .append(" = ")
                         .append(value)
                         .append(";\n");
-                default -> throw new RuntimeException("Encountered invalid value type in assignment: " + valueNode);
+                default -> throw new RuntimeException("Encountered invalid value type in assignment: " + valueType);
             };
+
+        var tmp = new StringBuilder();
+        valueNode.jjtAccept(this, tmp);
+        value = tmp.toString();
 
         return switch (valueType) {
             // 1. char *str_ptr;
@@ -243,7 +249,10 @@ public class CVisitor extends GriddyDefaultVisitor {
 
     @Override
     public Object visit(ASTIdent node, Object data) {
-        return ((StringBuilder) data).append(node.jjtGetValue());
+        var ident = node.jjtGetValue().toString();
+        if (ident.startsWith("@")) ident = getGriddyGlobal.apply(ident);
+
+        return ((StringBuilder) data).append(ident);
     }
 
     @Override
@@ -327,14 +336,8 @@ public class CVisitor extends GriddyDefaultVisitor {
     public Object visit(ASTInput node, Object data){
         var output = (StringBuilder) data;
         var arg = node.jjtGetChild(0);
-        Node assocNode;
 
-        ArrayList<Node> prevAssign = Util.getAssignedInScope(node, arg.jjtGetValue().toString());
-        if (prevAssign.isEmpty()) throw new RuntimeException("Identifier '" + arg.jjtGetValue() + "' unknown.");
-        assocNode = prevAssign
-                .get(prevAssign.size() - 1)
-                .jjtGetChild(1);
-        String argType = GriddyTreeConstants.jjtNodeName[assocNode.getId()];
+        String argType = Util.getIdentifierType(node, arg.jjtGetValue().toString());
         
         return switch (argType) {
             case "Integer", "Expr", "Boolean" -> {
@@ -355,5 +358,76 @@ public class CVisitor extends GriddyDefaultVisitor {
             }
             default -> throw new RuntimeException("Can't scan value of unknown type: " + argType);
         };
+    }
+
+    @Override
+    public Object visit(ASTCondStmt node, Object data) {
+        var out = (StringBuilder) data;
+        var ifCond = (StringBuilder) node.jjtGetChild(0).jjtAccept(this, new StringBuilder());
+        var body = new StringBuilder();
+        var multiStmt = node.getNumChildren() > 2 && !node.jjtGetChild(2).toString().equals("CondElse");
+
+        if (multiStmt) body.append("{\n");
+        node.jjtGetChild(1).jjtAccept(this, body);
+        for (int i = 2; i < node.getNumChildren(); i++) {
+            var c = node.jjtGetChild(i);
+            if (c.toString().equals("CondElse") && multiStmt) {
+                body.append("}\n");
+                multiStmt = false;
+            }
+            c.jjtAccept(this, body);
+        }
+        if (multiStmt) body.append("}\n");
+
+        return out.append(targetFormat.condStmt(ifCond.toString(), body.toString()));
+    }
+
+    @Override
+    public Object visit(ASTCondElse node, Object data) {
+        var body = new StringBuilder();
+
+        if (node.getNumChildren() > 1) body.append("{\n");
+        node.childrenAccept(this, body);
+        if (node.getNumChildren() > 1) body.append("}\n");
+
+        return ((StringBuilder) data)
+                .append(targetFormat.condElse(body.toString()));
+    }
+
+    @Override
+    public Object visit(ASTFuncDecl node, Object data) {
+        var body = new StringBuilder();
+        String retType = GriddyTreeConstants.jjtNodeName[node.jjtGetChild(3).getId()];
+
+        if (retType.equals("Ident"))
+            retType = Util.getIdentifierType(node, node.jjtGetChild(3).jjtGetValue().toString());
+
+        body.append(switch (retType) {
+            case "String" -> "char * ";
+            case "Integer", "Boolean" -> "int ";
+            default -> throw new RuntimeException("Unknown return type: " + retType);
+        }).append(node.jjtGetChild(0).jjtGetValue())
+                .append("(").append(") {\n");
+
+        node.jjtGetChild(2).jjtAccept(this, body);
+        body.append("return ");
+        node.jjtGetChild(3).jjtAccept(this, body);
+        body.append(";\n}\n");
+
+        return ((StringBuilder) data).append(body);
+    }
+
+    @Override
+    public Object visit(ASTFuncCall node, Object data) {
+        var out = (StringBuilder) data;
+        node.jjtGetChild(0).jjtAccept(this, data);
+
+        return out.append("()");
+    }
+
+    @Override
+    public Object visit(ASTStmt node, Object data) {
+        node.jjtGetChild(0).jjtAccept(this, data);
+        return ((StringBuilder) data).append(";\n");
     }
 }
