@@ -342,17 +342,6 @@ public class CVisitor extends GriddyDefaultVisitor {
                 arg.jjtAccept(this, data);
                 yield output.append(");\n");
             }
-            case "String" -> {
-                output.append("scanf(\"%s\", &");
-                arg.jjtAccept(this, data);
-                yield output.append(");\n");
-            }
-            case "Piece", "Access" -> {
-                output.append("scanf(\"%s\", &");
-                arg.jjtAccept(this, data);
-                yield output.append(".name")
-                        .append(");\n");
-            }
             default -> throw new RuntimeException("Can't scan value of unknown type: " + argType);
         };
     }
