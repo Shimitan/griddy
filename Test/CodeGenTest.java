@@ -56,4 +56,54 @@ public class CodeGenTest {
 
         assertEquals(expected, pldef.toString());
     }
+
+    @Test
+    void condIf() {
+        var condStr = "true == false";
+        var body = "printf(\"True!\");\n";
+
+        var expected = """
+                if (true == false)
+                printf("True!");
+                """;
+
+        assertEquals(expected, formatter.condStmt(condStr, body));
+    }
+
+    @Test
+    void condIfElse() {
+        var condStr = "true == false";
+        var primary = "printf(\"True!\");\n";
+        var secondary = "printf(\"False!\");\n";
+
+        var expected = """
+                if (true == false)
+                printf("True!");
+                else
+                printf("False!");
+                """;
+
+        assertEquals(expected, formatter.condStmt(condStr, primary + formatter.condElse(secondary)));
+    }
+
+    @Test
+    void condIfElseChain() {
+        var condStr1 = "true == false";
+        var condStr2 = "1 != 2";
+        var body1 = "printf(\"True!\");\n";
+        var body2 = "printf(\"Maybe true!\");\n";
+        var body3 = "printf(\"False!\");\n";
+
+        var expected = """
+                if (true == false)
+                printf("True!");
+                else
+                if (1 != 2)
+                printf("Maybe true!");
+                else
+                printf("False!");
+                """;
+
+        assertEquals(expected, formatter.condStmt(condStr1, body1 + formatter.condElse(formatter.condStmt(condStr2, body2 + formatter.condElse(body3)))));
+    }
 }

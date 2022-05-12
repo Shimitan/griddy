@@ -1,6 +1,6 @@
 # example_test.griddy
 
-board (3, 5);
+board (3, 6);
 
 piece p_x
     name: "X"
@@ -14,5 +14,36 @@ piece p_o
     StartPosition: (1, 1)
 end
 
-GAME
+user_input = 0;
+
+fun win_cond ()
+    cond = false;
+    output "End of game!";
+return 0
+
+fun ask_for_number ()
+    if @turn_count == 0
+        output "Please input a number between 50 and 100:";
+    end
+
+    input user_input;
+
+    if user_input > 100
+        output "That number is too big!";
+        output "Try again!";
+
+    else if user_input < 50
+        output "That number is too small!";
+        output "Try again!";
+
+    else
+        output "Excellent choice!";
+        output user_input;
+
+    end
+return 0
+
+GAME 0 #( (50 > user_input) || (user_input > 100) )
     output @board;
+
+    #ask_for_number();

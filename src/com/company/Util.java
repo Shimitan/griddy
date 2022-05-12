@@ -38,17 +38,38 @@ public class Util {
     public static ArrayList<Node> getAssignedInScope(Node node, String name) {
         var output = new ArrayList<Node>();
 
-        if (node.getParent() != null)
+        if (node.getParent() != null) {
             for (Node c : node.getParent().getChildren()) {
                 if (c == node) break;
 
-                if (GriddyTreeConstants.jjtNodeName[c.getId()].equals("Assign")
-                        && c.jjtGetChild(0).jjtGetValue().equals(name)
-                ) output.add(c);
-                else output.addAll(getAssignedInScope(node.getParent(), name));
+                if (c.toString().equals("Assign") && c.jjtGetChild(0).jjtGetValue().equals(name))
+                    output.add(c);
             }
+            output.addAll(getAssignedInScope(node.getParent(), name));
+        }
 
         return output;
+    }
+
+    public static String getIdentifierType(Node node, String name, boolean debug) {
+        Node assocNode;
+
+        ArrayList<Node> prevAssign = Util.getAssignedInScope(node, name);
+        if (prevAssign.isEmpty()) throw new RuntimeException("Identifier '" + name + "' unknown.");
+
+        assocNode = prevAssign.get(prevAssign.size() - 1).jjtGetChild(1);
+
+        if (debug) System.out.println();
+
+        var type = GriddyTreeConstants.jjtNodeName[assocNode.getId()];
+        if (type.equals("Ident"))
+            return getIdentifierType(assocNode, prevAssign.get(prevAssign.size() - 1).jjtGetChild(0).jjtGetValue().toString());
+
+        return type;
+    }
+
+    public static String getIdentifierType(Node node, String name) {
+        return getIdentifierType(node, name, false);
     }
 
     public static void cli(String[] args, StringBuilder output) {

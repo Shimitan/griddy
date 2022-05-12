@@ -69,9 +69,9 @@ TOKEN : {
     |   < END:  "end"   >   // block end
     |   < OUTPUT: "output"  >   // prints the output
     |   < INPUT: "input"    >   // scans the user input
-    |   < GAME_SETUP:   "SETUP" >   // setup phase begin
     |   < GAME_MAIN:    "GAME"  >   // game phase begin
     |   < FUNC_DECL:    "fun"   >   // function declaration
+    |   < RETURN:   "return"    >
     |   < BOARD_DECL:   "board" >   // board declaration token, e.g. 'board (n,m)'
     |   < PIECE_DECL:   "piece" >   // game piece declaration token, e.g. 'piece { ...props }'
     |   < GET:  "get"   >
@@ -144,23 +144,27 @@ void setupPhase() : {}
 
 void setupStmt() : {}
 {
-        assignment() <SEMICOLON>
+        functionDeclaration()
     |   pieceDeclaration()
+    |   assignment() <SEMICOLON>
     |   boardDeclaration() <SEMICOLON>
 }
 
 void gamePhase() #Game : {}
 {
-    <GAME_MAIN>
+    <GAME_MAIN> expression()
     ( gameStmt() )*
 }
 
 void gameStmt() : {}
 {
-        assignment() <SEMICOLON>
+        LOOKAHEAD( functionCall() )
+        ( functionCall() <SEMICOLON> ) #Stmt
     |   outputStmt() <SEMICOLON>
+    |   assignment() <SEMICOLON>
     |   placeStmt() <SEMICOLON>
     |   inputStmt() <SEMICOLON>
+    |   conditionalStmt()
 }
 
 void placeStmt() #Place : {}
@@ -268,10 +272,12 @@ void unary() : {}
 
 void primary() : {}
 {
-        number()
+        LOOKAHEAD( functionCall() )
+        functionCall()
+    |   identifier()
+    |   number()
     |   bool()
     |   stringLiteral()
-    |   identifier()
 }
 
 ASTOperator booleanOperator() #Operator :
@@ -310,7 +316,7 @@ ASTInteger number() #Integer :
     Token t;
 }
 {
-    t=<NUM>
+    ( t=<NUM> | t=<NEG_NUM> )
     {
         jjtThis.jjtSetValue(Integer.parseInt(t.image));
         return jjtThis;
@@ -346,4 +352,42 @@ void outputStmt() #Output : {}
 void inputStmt() #Input : {}
 {
     <INPUT> expression()
+}
+
+void conditionalStmt() #CondStmt : {}
+{
+    <IF> expression()
+    ( gameStmt() )+
+    ( <END> | elseBlock() )
+}
+
+void elseBlock() #CondElse : {}
+{
+        LOOKAHEAD(<ELSE> <IF>)
+        <ELSE> conditionalStmt()
+    |   <ELSE> ( gameStmt() )+ <END>
+}
+
+void functionDeclaration() #FuncDecl : {}
+{
+    <FUNC_DECL> identifier() argumentList()
+    functionBody()
+    <RETURN> expression()
+}
+
+void argumentList() #ArgList : {}
+{
+        LOOKAHEAD( <LPAREN> <RPAREN> )
+        <LPAREN> <RPAREN>
+    |   <LPAREN> identifier() ( <COMMA> identifier() )* <RPAREN>
+}
+
+void functionBody() #FuncBody : {}
+{
+    ( gameStmt() )*
+}
+
+void functionCall() #FuncCall : {}
+{
+    identifier() argumentList()
 }
