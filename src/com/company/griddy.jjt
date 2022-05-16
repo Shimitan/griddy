@@ -232,7 +232,17 @@ ASTEmpty empty() #Empty :
 
 void expression() #Expr(>1) : {}
 {
-    multiplicativeExpr() [ ( additiveOperator() | booleanOperator() ) multiplicativeExpr() ]
+    boolExpr() ( logicalOperator() boolExpr() )*
+}
+
+void addExpr() #AddExpr(>1) : {}
+{
+    multiplicativeExpr() [ additiveOperator() multiplicativeExpr() ]
+}
+
+void boolExpr() #BoolExpr(>1) : {}
+{
+    addExpr() ( booleanOperator() addExpr() )?
 }
 
 ASTOperator additiveOperator() #Operator :
@@ -241,6 +251,18 @@ ASTOperator additiveOperator() #Operator :
 }
 {
     ( t=<PLUS> | t=<MINUS> )
+    {
+        jjtThis.jjtSetValue(t.image);
+        return jjtThis;
+    }
+}
+
+ASTOperator logicalOperator() #Operator :
+{
+    Token t;
+}
+{
+    ( t=<OR> | t=<AND> )
     {
         jjtThis.jjtSetValue(t.image);
         return jjtThis;
@@ -268,6 +290,7 @@ void unary() : {}
 {
         <LPAREN> expression() <RPAREN>
     |   primary()
+    |   <NOT> expression()
 }
 
 void primary() : {}
@@ -291,7 +314,6 @@ ASTOperator booleanOperator() #Operator :
     |  t=<GEQ>
     |  t=<LT>
     |  t=<GT>
-    |  t=<OR>
     )
     {
         jjtThis.jjtSetValue(t.image);

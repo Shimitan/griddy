@@ -43,7 +43,11 @@ fun ask_for_number ()
     end
 return 0
 
-GAME 0 #( (50 > user_input) || (user_input > 100) )
+#min = 50 > user_input;
+
+#max = user_input > 100;
+
+GAME 50 > user_input #(50 > user_input) || (user_input > 100)
     output @board;
 
-    #ask_for_number();
+    ask_for_number();
