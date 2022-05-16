@@ -14,4 +14,11 @@ public interface TargetFormat {
 
     String condStmt(String condition, String body);
     String condElse(String body);
+
+    String assignPieceRef(String ident, int x, int y);
+    String formatPieceRef(int x, int y);
+    String reAssignVar(String ident, String body);
+
+    String assignString(String ident, String body);
+    String reAssignString(String ident, String body);
 }

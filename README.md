@@ -6,20 +6,19 @@ A programming language for board games.
 
 - JDK 17 (Java Development Kit)
 - JRE (Java Runtime Environment)
+- GCC (GNU C compiler)
 
 ## Usage
 
-*Generate, compile, and run parser:*
-
 ```shell
-# Run build script
+# Build Griddy compiler
 sh build.sh
 
-# Parse example_1 and output generated code to terminal
-java -cp output com.company.Main -f examples/example_1.griddy
+# Compile to binary
+java -cp output com.company.Main --file examples/tic_tac_toe.griddy --compile
 
-# Compile generated code
-gcc examples/example_1.griddy.c
+# Run binary
+./a.out
 ```
 
 ## Files
@@ -30,6 +29,5 @@ gcc examples/example_1.griddy.c
 - AST node interface: `src/com/company/parser/Node.java`
 - Base AST node: `src/com/company/parser/SimpleNode.java`
 - Code generation: 
-  - C target: `src/com/company/target/CVisitor.java`
-  - JS target: `src/com/company/target/JSVisitor.java`
+  - Visitor: `src/com/company/target/CVisitor.java`
 - Program entry: `src/com/company/Main.java`

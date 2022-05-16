@@ -6,8 +6,20 @@ import com.company.parser.Node;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class Util {
+    public static final class ANSI {
+        public static final String RESET = "\u001B[0m";
+        public static final String FG_RED = "\u001B[38;5;9m";
+        public static final String FG_GREEN = "\u001B[38;5;10m";
+        public static final String FG_BLUE = "\u001B[38;5;12m";
+        public static final String FG_YELLOW = "\u001B[38;5;11m";
+        public static final String STYLE_UNDERLINE = "\u001B[4m";
+        public static final String STYLE_BOLD = "\u001B[1m";
+        public static final String STYLE_ITALIC = "\u001B[3m";
+    }
+
     /**
      * Check if identifier name has been declared in scope.
      * @param node start
@@ -42,7 +54,7 @@ public class Util {
             for (Node c : node.getParent().getChildren()) {
                 if (c == node) break;
 
-                if (c.toString().equals("Assign") && c.jjtGetChild(0).jjtGetValue().equals(name))
+                if (GriddyTreeConstants.jjtNodeName[c.getId()].equals("Assign") && c.jjtGetChild(0).jjtGetValue().equals(name))
                     output.add(c);
             }
             output.addAll(getAssignedInScope(node.getParent(), name));
@@ -51,15 +63,13 @@ public class Util {
         return output;
     }
 
-    public static String getIdentifierType(Node node, String name, boolean debug) {
+    public static String getIdentifierType(Node node, String name) {
         Node assocNode;
 
         ArrayList<Node> prevAssign = Util.getAssignedInScope(node, name);
-        if (prevAssign.isEmpty()) throw new RuntimeException("Identifier '" + name + "' unknown.");
+        if (prevAssign.isEmpty()) throw new RuntimeException("Can't get type of '" + name + "'. Identifier unknown.");
 
         assocNode = prevAssign.get(prevAssign.size() - 1).jjtGetChild(1);
-
-        if (debug) System.out.println();
 
         var type = GriddyTreeConstants.jjtNodeName[assocNode.getId()];
         if (type.equals("Ident"))
@@ -68,9 +78,23 @@ public class Util {
         return type;
     }
 
-    public static String getIdentifierType(Node node, String name) {
-        return getIdentifierType(node, name, false);
+    public static String getFunctionReturnType(Node node, String name) {
+        var root = node;
+        while (root.getParent() != null) root = root.getParent();
+
+        for (Node c : root.getChildren()) {
+            if (c.toString().equals("FuncDecl") && c.jjtGetChild(0).jjtGetValue().toString().equals(name)) {
+                var retType = GriddyTreeConstants.jjtNodeName[c.jjtGetChild(3).getId()];
+                if (retType.equals("Ident")) {
+                    return getIdentifierType(c.jjtGetChild(2).jjtGetChild(c.getNumChildren() - 1), c.jjtGetChild(3).jjtGetValue().toString());
+                }
+
+                return retType;
+            }
+        }
+        throw new RuntimeException("Declaration for function '" + name + "' not found.");
     }
+
 
     public static void cli(String[] args, StringBuilder output) {
         CLI_Flags flags = new CLI_Flags();
@@ -119,7 +143,25 @@ public class Util {
             if (flags.compile) {
                 Runtime runtime = Runtime.getRuntime();
                 String[] cmdArgs = {"gcc", outFile.getPath()};
-                runtime.exec(cmdArgs);
+
+                Process cmdProc = runtime.exec(cmdArgs);
+
+                try {
+                    if (cmdProc.waitFor() == 0) {
+                        System.out.println("Successfully compiled: " + ANSI.FG_GREEN + ANSI.STYLE_BOLD + "\u001B[52m" + flags.file + ANSI.RESET + "!");
+                    } else {
+                        System.out.println("Failed to compile: " + ANSI.FG_YELLOW + ANSI.STYLE_BOLD + flags.file + ANSI.RESET + ".");
+
+                        InputStream procStdErr = cmdProc.getErrorStream();
+                        String errStr = new BufferedReader(
+                                new InputStreamReader(procStdErr, StandardCharsets.UTF_8)
+                        ).lines().collect(Collectors.joining("\n"));
+
+                        System.out.println(ANSI.FG_RED + errStr + ANSI.RESET);
+                    }
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
             }
 
         } catch (IOException e) {
@@ -195,3 +237,4 @@ public class Util {
         return arr;
     }
 }
+

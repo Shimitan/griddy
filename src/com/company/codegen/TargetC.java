@@ -4,11 +4,13 @@ import com.company.Util;
 
 public class TargetC implements TargetFormat {
     public String formatPieceDef(String ident, PieceDef pieceDef) {
+        var displayName = pieceDef.props.name();
         return
-                ident + ".name = calloc(" + (pieceDef.props.name().length() + 1) + ", sizeof(char));\n"
-                        + "strcpy(" + ident + ".name, \"" + pieceDef.props.name() + "\");\n"
+                ident + ".name = calloc(" + (displayName.length() + 1) + ", sizeof(char));\n"
+                        + "strcpy(" + ident + ".name, \"" + displayName + "\");\n"
                         + ident + ".limit = " + pieceDef.props.limit() + ";\n"
-                        + ident + ".count = " + pieceDef.count + ";\n";
+                        + ident + ".count = " + pieceDef.count + ";\n"
+                        + ident + ".player = &" + pieceDef.ownerPrefix + ";\n";
     }
 
     public String formatPlayerDef(PlayerDef playerDef) {
@@ -55,8 +57,9 @@ public class TargetC implements TargetFormat {
 
         return out.append("};\n")
                 .append("""
-                    struct Player _current_player;
+                    struct Player * _current_player;
                     int _turn_count = 0;
+                    int _win_condition = 0;
                     """)
                 .append(setupStruct.body.toString())
                 .toString();
@@ -66,12 +69,19 @@ public class TargetC implements TargetFormat {
         return """
         /*   GAME    */
         do {
+        _current_player = _turn_count % 2 ? &_p2 : &_p1;
         """
         + body
         + """
+        _win_condition"""
+        + " = "
+        + winCond
+        + ";\n"
+        + """
         _turn_count++;
-        } while ("""
-        + winCond + ");\n\n";
+        } while (!_win_condition);
+        
+        """;
     }
 
     public String format(SetupStruct setupStruct, GameStruct gameStruct) {
@@ -80,9 +90,10 @@ public class TargetC implements TargetFormat {
         #include <stdio.h>
         #include <stdlib.h>
         #include <string.h>
+        #include <stdbool.h>
 
         int main(int argc, char *argv[]){
-        struct Piece { char* name; unsigned int limit; unsigned int count; };
+        struct Piece { char* name; unsigned int limit; unsigned int count; struct Player* player; };
         
         """
         + setupStruct
@@ -95,7 +106,7 @@ public class TargetC implements TargetFormat {
     }
 
     public String formatTurn(String playerPrefix, String body) {
-        return "_current_player = " + playerPrefix + ";\n" + body + "\n";
+        return "_current_player = &" + playerPrefix + ";\n" + body + "\n";
     }
 
     public String outputString(String body) {
@@ -128,7 +139,11 @@ public class TargetC implements TargetFormat {
                 + "for (int _j = 0; _j < " + w + "; _j++)\n"
                 + """
                 if (_board[_i][_j]) {
+                if (_board[_i][_j]->player == &_p1) {
+                printf("│ \\x1b[33m\\x1b[1m%c\\x1b[0m ", *_board[_i][_j]->name);
+                } else {
                 printf("│ %c ", *_board[_i][_j]->name);
+                }
                 } else printf("│   ");
                 printf("│ %d\\n", _i + 1);
                 """
@@ -143,5 +158,28 @@ public class TargetC implements TargetFormat {
 
     public String condElse(String body) {
         return "else\n" + body;
+    }
+
+    public String assignPieceRef(String ident, int x, int y) {
+        return "struct Piece * " + ident + " = " + formatPieceRef(x, y) + ";\n";
+    }
+
+    public String formatPieceRef(int x, int y) {
+        return "_board[" + (y - 1) + "][" + (x - 1) + "]";
+    }
+
+    public String reAssignVar(String ident, String body) {
+        return ident + " = " + body + ";\n";
+    }
+
+    public String assignString(String ident, String body) {
+        return "char *" + ident + ";\n"
+                + ident + " = calloc(" + (body.length() + 1) + ", sizeof(char));\n"
+                + "strcpy(" + ident + ", \"" + body + "\");\n";
+    }
+
+    public String reAssignString(String ident, String body) {
+        return ident + " = realloc(" + ident + ", " + (body.length() + 1) + ");\n"
+                + "strcpy(" + ident + ", " + body + ");\n";
     }
 }
