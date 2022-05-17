@@ -232,17 +232,23 @@ ASTEmpty empty() #Empty :
 
 void expression() #Expr(>1) : {}
 {
-    boolExpr() ( logicalOperator() boolExpr() )*
+    LOOKAHEAD(boolExpr() logicalOperator())
+        boolExpr() ( logicalOperator() boolExpr() )+
+    |   boolExpr()
 }
 
 void addExpr() #AddExpr(>1) : {}
 {
-    multiplicativeExpr() [ additiveOperator() multiplicativeExpr() ]
+    LOOKAHEAD(multiplicativeExpr() additiveOperator())
+        multiplicativeExpr() ( additiveOperator() multiplicativeExpr() )*
+    |   multiplicativeExpr()
 }
 
 void boolExpr() #BoolExpr(>1) : {}
 {
-    addExpr() ( booleanOperator() addExpr() )?
+    LOOKAHEAD(addExpr() booleanOperator())
+        addExpr() ( booleanOperator() addExpr() )+
+    |   addExpr()
 }
 
 ASTOperator additiveOperator() #Operator :
@@ -271,7 +277,9 @@ ASTOperator logicalOperator() #Operator :
 
 void multiplicativeExpr() #Expr(>1) : {}
 {
-    unary() [ multiplicativeOperator() unary() ]
+    LOOKAHEAD(unary() multiplicativeOperator())
+        unary() ( multiplicativeOperator() unary() )+
+    |   unary()
 }
 
 ASTOperator multiplicativeOperator() #Operator :
@@ -290,7 +298,7 @@ void unary() : {}
 {
         <LPAREN> expression() <RPAREN>
     |   primary()
-    |   <NOT> expression()
+    |   <NOT> <LPAREN> expression() <RPAREN>
 }
 
 void primary() : {}

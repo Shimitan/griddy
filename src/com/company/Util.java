@@ -118,7 +118,7 @@ public class Util {
 
             if (flags.compile) {
                 Runtime runtime = Runtime.getRuntime();
-                String[] cmdArgs = {"gcc", outFile.getPath()};
+                String[] cmdArgs = {"gcc", "-std=c99", outFile.getPath()};
                 runtime.exec(cmdArgs);
             }
 

@@ -47,7 +47,7 @@ return 0
 
 #max = user_input > 100;
 
-GAME 50 > user_input #(50 > user_input) || (user_input > 100)
+GAME !(50 > user_input)
     output @board;
 
     ask_for_number();
