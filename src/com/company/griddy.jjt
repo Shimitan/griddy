@@ -61,7 +61,7 @@ SPECIAL_TOKEN : {
 TOKEN : {
         < IF:   "if"    >   // if statement
     |   < ELSE: "else"  >   // else statement
-    |   < FROM: "from"  >   // get value 'from' board, e.g. '(x,y) from my_board'
+    |   < FROM: "from"  >   // get piece 'from' player 'piece from @player1'
     |   < ON:   "on"    >   // value exist on board, e.g. 'game_piece on my_board'
     |   < AT:   "at"    >
     |   < IN:   "in"    >   // e.g. 'for x in iterable'
@@ -77,6 +77,8 @@ TOKEN : {
     |   < GET:  "get"   >
     |   < PLACE: "place"    >   // place pieces on a board
     |   < NULL: "empty" >
+    |   < TILE: "tile"  >
+    |   < IS_EMPTY: "empty?"    >
 }
 
 /* Punctuators */
@@ -152,7 +154,7 @@ void setupStmt() : {}
 
 void gamePhase() #Game : {}
 {
-    <GAME_MAIN> expression()
+    <GAME_MAIN> unary()
     ( gameStmt() )*
 }
 
@@ -169,23 +171,18 @@ void gameStmt() : {}
 
 void placeStmt() #Place : {}
 {
-    <PLACE> identifier() <ON> identifier() <AT> position()
+    <PLACE> ( LOOKAHEAD(2) getPiece() | identifier() ) <AT> position()
 }
 
 ASTPosition position() #Position : { }
 {
-    <LPAREN> number() <COMMA> number() <RPAREN>
+    <LPAREN> ( number() | identifier() ) <COMMA> ( number() | identifier() ) <RPAREN>
     { return jjtThis; }
 }
 
 void boardDeclaration() #Board : {}
 {
     <BOARD_DECL> position()
-}
-
-void boardAccess() #Access  : { }
-{
-     position() <ON> identifier()
 }
 
 ASTPiece pieceDeclaration() #Piece :
@@ -196,7 +193,7 @@ ASTPiece pieceDeclaration() #Piece :
     <PIECE_DECL> identifier()
     (
         { Node k, v; }
-        k=identifier() <COLON> ( v=number() | v=stringLiteral() | v=position() )
+        k=identifier() <COLON> ( v=number() | v=stringLiteral() | v=position() | v=bool() )
         {
             props.put((String) k.jjtGetValue(), v);
             jjtThis.jjtSetValue(props);
@@ -209,11 +206,9 @@ ASTPiece pieceDeclaration() #Piece :
 void assignment() #Assign : {}
 {
     identifier() <ASSIGN>
-    (   LOOKAHEAD( boardAccess() )
-        boardAccess()
+    (   LOOKAHEAD( functionCall() )
+        functionCall()
     |   expression()
-    |   boardDeclaration()
-    |   pieceDeclaration()
     |   empty()
     )
 }
@@ -297,15 +292,17 @@ ASTOperator multiplicativeOperator() #Operator :
 void unary() : {}
 {
         <LPAREN> expression() <RPAREN>
+    |   isTileEmpty()
+    |   tileAccess()
     |   primary()
-    |   <NOT> <LPAREN> expression() <RPAREN>
+    |   <NOT> <LPAREN> expression() <RPAREN> #BoolNot
 }
 
 void primary() : {}
 {
         LOOKAHEAD( functionCall() )
         functionCall()
-    |   identifier()
+    |   ( LOOKAHEAD(2) getPiece() | identifier() )
     |   number()
     |   bool()
     |   stringLiteral()
@@ -323,6 +320,7 @@ ASTOperator booleanOperator() #Operator :
     |  t=<LT>
     |  t=<GT>
     )
+
     {
         jjtThis.jjtSetValue(t.image);
         return jjtThis;
@@ -353,13 +351,16 @@ ASTInteger number() #Integer :
     }
 }
 
-void bool() #Boolean :
+ASTBoolean bool() #Boolean :
 {
     Token t;
 }
 {
     t=<BOOL>
-    { jjtThis.jjtSetValue(t.image); }
+    {
+        jjtThis.jjtSetValue(t.image);
+        return jjtThis;
+    }
 }
 
 ASTString stringLiteral() #String :
@@ -420,4 +421,19 @@ void functionBody() #FuncBody : {}
 void functionCall() #FuncCall : {}
 {
     identifier() argumentList()
+}
+
+void tileAccess() #Tile : {}
+{
+    <TILE> position()
+}
+
+void getPiece() #GetPiece : {}
+{
+    identifier() <FROM> identifier()
+}
+
+void isTileEmpty() #TileEmpty : {}
+{
+    <IS_EMPTY> position()
 }

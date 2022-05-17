@@ -1,6 +1,6 @@
 # example_test.griddy
 
-board (3, 6);
+board (3, 3);
 
 piece p_x
     name: "X"
@@ -41,7 +41,7 @@ fun ask_for_number ()
         output user_input;
 
     end
-return 0
+return "Hello"
 
 #min = 50 > user_input;
 
@@ -50,4 +50,12 @@ return 0
 GAME !(50 > user_input)
     output @board;
 
-    ask_for_number();
+    p_one = tile (3, 3);
+    p_two = tile (3, 1);
+
+    expr = 1 + 2;
+
+    output p_one == p_two;
+
+    #output ask_for_number();
+

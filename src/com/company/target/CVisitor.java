@@ -18,17 +18,19 @@ public class CVisitor extends GriddyDefaultVisitor {
     GriddyStructure generator = new GriddyStructure(targetFormat);
 
     Function<String, String> getGriddyGlobal = k -> switch (k) {
-            case "@player1" -> "_p1";
-            case "@player2" -> "_p2";
+            case "@player_one" -> "&_p1";
+            case "@player_two" -> "&_p2";
             case "@board" -> "_board";
             case "@current_player" -> "_current_player";
             case "@turn_count" -> "_turn_count";
+            case "@win_condition" -> "_win_condition";
             default -> throw new RuntimeException("Unknown identifier: '" + k + "'");
     };
 
     Function<String, String> getGriddyGlobalType = k -> switch (k) {
-        case "@player1", "@player2" -> "Player";
+        case "@player_one", "@player_two" -> "Player";
         case "@board" -> "Board";
+        case "@win_condition" -> "int";
         default -> throw new RuntimeException("Unknown identifier: '" + k + "'");
     };
 
@@ -55,34 +57,51 @@ public class CVisitor extends GriddyDefaultVisitor {
     public Object visit(ASTOutput node, Object data) {
         var output = (StringBuilder) data;
         var arg = node.jjtGetChild(0);
+
         String argType = GriddyTreeConstants.jjtNodeName[arg.getId()];
-        Node assocNode = null;
-        var ident = arg.jjtGetValue().toString();
+        String value = switch (argType) {
+            case "FuncCall" -> {
+                var retNode = arg.jjtGetChild(0);
+                var val = retNode.jjtGetValue().toString();
+                argType = Util.getFunctionReturnType(node, val);
+                yield val + "()";
+            }
+            case "String" -> "\"" + arg.jjtGetValue() + "\"";
+            case "Ident" -> {
+                var val = arg.jjtGetValue().toString();
 
-        if (argType.equals("String")) {
-            ident = "\"" + ident + "\"";
+                if (val.startsWith("_")) {
+                    argType = getGriddyGlobalType.apply(val.replaceFirst("_", "@"));
+                    yield getGriddyGlobal.apply(val);
+                }
 
-        } else if (argType.equals("Ident") && (ident.startsWith("_") || ident.startsWith("@"))) {
-            argType = getGriddyGlobalType.apply(ident.replaceFirst("_", "@"));
-            ident = getGriddyGlobal.apply(ident);
+                if (val.startsWith("@")) {
+                    argType = getGriddyGlobalType.apply(val);
+                    yield getGriddyGlobal.apply(val);
+                }
 
-        } else if (argType.equals("Ident")) {
-            argType = Util.getIdentifierType(node, ident);
-        }
+                argType = Util.getIdentifierType(node, val);
+                yield val;
+            }
+            case "Boolean" -> arg.jjtGetValue().toString().equals("true") ? "1" : "0";
+            default -> null;
+        };
+
 
         return switch (argType) {
-            case "Integer", "Expr" -> output.append(targetFormat.outputNumber(ident));
-            case "Boolean" -> output
-                    .append("printf(\"%d\\n\", ")
-                    .append(ident.equals("true") ? 1 : 0)
-                    .append(");\n");
-            case "String" -> output.append(targetFormat.outputString(ident));
-            case "Access" -> output
+            case "Integer", "Boolean" -> output.append(targetFormat.outputNumber(value));
+            case "Expr" -> {
+                output.append("printf(\"%d\\n\", ");
+                arg.jjtAccept(this, output);
+                yield output.append(");\n");
+            }
+            case "String" -> output.append(targetFormat.outputString(value));
+            case "Tile" -> output
                     .append("printf(\"%s\\n\", ")
-                    .append(ident).append(".name")
+                    .append(value).append("->name")
                     .append(");\n");
             case "Board" -> output.append(targetFormat.outputTable(
-                    ident,
+                    value,
                     generator.setupStruct.boardWidth,
                     generator.setupStruct.boardHeight
             ));
@@ -144,18 +163,7 @@ public class CVisitor extends GriddyDefaultVisitor {
             return switch (valueType) {
                 // 1. str_ptr = realloc(str_ptr, str_size);
                 // 2. strcpy(str_ptr, str_val);
-                case "String" ->
-                    output.append(ident)
-                            .append(" = realloc(")
-                            .append(ident)
-                            .append(", ")
-                            .append(value.toString().length() + 1)
-                            .append(");\n")
-                            .append("strcpy(")
-                            .append(ident)
-                            .append(", ")
-                            .append(value)
-                            .append(");\n");
+                case "String" -> output.append(targetFormat.reAssignString(ident, value.toString()));
                 // Integer values 0 and >0 used in C boolean expressions instead of bool literals.
                 // 1. var_name = int_val;
                 case "Integer", "Boolean", "Expr" -> output
@@ -174,19 +182,7 @@ public class CVisitor extends GriddyDefaultVisitor {
             // 1. char *str_ptr;
             // 2. str_ptr = calloc(str_size, sizeof(char));
             // 3. strcpy(str_ptr, str_val);
-            case "String" -> output
-                    .append("char *")
-                    .append(ident)
-                    .append(";\n")
-                    .append(ident)
-                    .append(" = calloc(")
-                    .append(value.toString().length() + 1)
-                    .append(", sizeof(char));\n")
-                    .append("strcpy(")
-                    .append(ident)
-                    .append(", \"")
-                    .append(value)
-                    .append("\");\n");
+            case "String" -> output.append(targetFormat.assignString(ident, value.toString()));
 
             // Integer values 0 and >0 used in C boolean expressions instead of bool literals.
             // 1. int var_name = int_value;
@@ -202,14 +198,11 @@ public class CVisitor extends GriddyDefaultVisitor {
                 identNode.jjtAccept(this, data);
                 yield output.append(";\n");
             }
-            case "Access" -> output
-                    .append("struct Piece ")
-                    .append(ident)
-                    .append(";\n")
-                    .append(ident)
-                    .append(" = ")
-                    .append(value)
-                    .append(";\n");
+            case "Tile" -> output.append(targetFormat.assignPieceRef(
+                    ident,
+                    (int)valueNode.jjtGetChild(0).jjtGetChild(0).jjtGetValue(),
+                    (int)valueNode.jjtGetChild(0).jjtGetChild(1).jjtGetValue()
+            ));
             default -> throw new RuntimeException("Encountered invalid value type in assignment: " + valueNode);
         };
     }
@@ -265,39 +258,18 @@ public class CVisitor extends GriddyDefaultVisitor {
         return ((StringBuilder) data).append("true".equals(node.jjtGetValue()) ? 1 : 0);
     }
 
-    /**
-     * Generates:
-     * <br>
-     * {@code 1. some_board[y][x]}
-     * @param node an access AST node
-     * @param data String Builder
-     * @return StringBuilder
-     */
-    public Object visit(ASTAccess node, Object data) {
-        var out = (StringBuilder)data;
-
-        out.append("*");
-        node.jjtGetChild(1).jjtAccept(this, data);  //  board
-        out.append("[");
-        node.jjtGetChild(0).jjtGetChild(1).jjtAccept(this, data);   //  Y
-        out.append("-1][");
-        node.jjtGetChild(0).jjtGetChild(0).jjtAccept(this, data);   //  X
-        return out.append("-1]");
-    }
-
     @Override
     public Object visit(ASTPlace node, Object data) {
         var out = (StringBuilder) data;
         var piece = node.jjtGetChild(0);
-        var pos = node.jjtGetChild(2);
+        var pos = node.jjtGetChild(1);
 
         out.append("if (");
         piece.jjtAccept(this, data);
         out.append(".count < ");
         piece.jjtAccept(this, data);
         out.append(".limit) {\n");
-        node.jjtGetChild(1).jjtAccept(this, data);  //  board
-        out.append("[");
+        out.append("_board[");
         pos.jjtGetChild(1).jjtAccept(this, data);   //  Y
         out.append("-1][");
         pos.jjtGetChild(0).jjtAccept(this, data);   //  X
@@ -316,12 +288,12 @@ public class CVisitor extends GriddyDefaultVisitor {
         var pieceProps = (HashMap<String, Node>) node.jjtGetValue();
 
         var ident = node.jjtGetChild(0).jjtGetValue().toString();
-        String name = pieceProps.get("name").jjtGetValue().toString();
-        Integer limit = (Integer) pieceProps.get("limit").jjtGetValue();
+        Node limitNode = pieceProps.get("limit");
+        int limit = limitNode == null ? Integer.MAX_VALUE : (Integer) limitNode.jjtGetValue();
         Object[] moveset = { new Object() };
         Node startPos = pieceProps.get("StartPosition");
 
-        PieceDef pieceDef = new PieceDef(ident, name, limit, List.of(moveset), targetFormat);
+        PieceDef pieceDef = new PieceDef(ident, ident, limit, List.of(moveset), targetFormat);
 
         if (startPos != null) pieceDef.setStartPos(
                 (Integer) startPos.jjtGetChild(0).jjtGetValue(),
@@ -386,10 +358,12 @@ public class CVisitor extends GriddyDefaultVisitor {
     @Override
     public Object visit(ASTFuncDecl node, Object data) {
         var body = new StringBuilder();
-        String retType = GriddyTreeConstants.jjtNodeName[node.jjtGetChild(3).getId()];
+        Node retNode = node.jjtGetChild(3);
+        String retType = GriddyTreeConstants.jjtNodeName[retNode.getId()];
+        var bodyLen = node.jjtGetChild(2).getNumChildren();
 
         if (retType.equals("Ident"))
-            retType = Util.getIdentifierType(node, node.jjtGetChild(3).jjtGetValue().toString());
+            retType = Util.getIdentifierType(node.jjtGetChild(2).jjtGetChild(bodyLen - 1), retNode.jjtGetValue().toString());
 
         body.append(switch (retType) {
             case "String" -> "char * ";
@@ -400,7 +374,7 @@ public class CVisitor extends GriddyDefaultVisitor {
 
         node.jjtGetChild(2).jjtAccept(this, body);
         body.append("return ");
-        node.jjtGetChild(3).jjtAccept(this, body);
+        retNode.jjtAccept(this, body);
         body.append(";\n}\n");
 
         return ((StringBuilder) data).append(body);
@@ -418,5 +392,49 @@ public class CVisitor extends GriddyDefaultVisitor {
     public Object visit(ASTStmt node, Object data) {
         node.jjtGetChild(0).jjtAccept(this, data);
         return ((StringBuilder) data).append(";\n");
+    }
+
+    @Override
+    public Object visit(ASTGetPiece node, Object data) {
+        var output = (StringBuilder) data;
+
+        var pieceIdent = node.jjtGetChild(0);
+        var player = node.jjtGetChild(1);
+
+        player.jjtAccept(this, output);
+        output.append("->");
+        return pieceIdent.jjtAccept(this, output);
+    }
+
+    @Override
+    public Object visit(ASTTileEmpty node, Object data) {
+        var output = (StringBuilder) data;
+        var pos = (ASTPosition) node.jjtGetChild(0);
+
+        output.append("_board[");
+        pos.jjtGetChild(1).jjtAccept(this, data);
+        output.append("-1][");
+        pos.jjtGetChild(0).jjtAccept(this, data);
+        return output.append("-1] == NULL");
+    }
+
+    @Override
+    public Object visit(ASTTile node, Object data) {
+        var output = (StringBuilder) data;
+        var pos = (ASTPosition) node.jjtGetChild(0);
+
+        output.append("_board[");
+        pos.jjtGetChild(1).jjtAccept(this, data);
+        output.append("-1][");
+        pos.jjtGetChild(0).jjtAccept(this, data);
+        return output.append("-1]");
+    }
+
+    @Override
+    public Object visit(ASTBoolNot node, Object data) {
+        var output = (StringBuilder) data;
+        output.append("!(");
+        node.jjtGetChild(0).jjtAccept(this, data);
+        return output.append(")");
     }
 }
