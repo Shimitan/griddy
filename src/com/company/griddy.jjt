@@ -90,8 +90,8 @@ TOKEN : {
     |   < NOT:  "!"     >   // 'not' / 'negate'
     |   < LT:   "<"     >   // 'less than'
     |   < GT:   ">"     >   // 'greater than'
-    |   < AND:  "&&"    >   // logical 'and'
-    |   < OR:   "||"    >   // logical 'or'
+    |   < AND:  "and"    >   // logical 'and'
+    |   < OR:   "or"    >   // logical 'or'
     |   < PLUS: "+"     >   // addition
     |   < MINUS:"-"     >   // subtraction
     |   < MULT: "*"     >   // multiplication
@@ -154,7 +154,7 @@ void setupStmt() : {}
 
 void gamePhase() #Game : {}
 {
-    <GAME_MAIN> unary()
+    <GAME_MAIN> <LPAREN> expression() <RPAREN>
     ( gameStmt() )*
 }
 
@@ -171,7 +171,7 @@ void gameStmt() : {}
 
 void placeStmt() #Place : {}
 {
-    <PLACE> ( LOOKAHEAD(2) getPiece() | identifier() ) <AT> position()
+    <PLACE> identifier()
 }
 
 ASTPosition position() #Position : { }
@@ -198,7 +198,7 @@ ASTPiece pieceDeclaration() #Piece :
             props.put((String) k.jjtGetValue(), v);
             jjtThis.jjtSetValue(props);
         }
-    )+
+    )*
     <END>
     { jjtThis.jjtSetValue(props); return jjtThis; }
 }
@@ -232,14 +232,14 @@ void expression() #Expr(>1) : {}
     |   boolExpr()
 }
 
-void addExpr() #AddExpr(>1) : {}
+void addExpr() #Expr(>1) : {}
 {
     LOOKAHEAD(multiplicativeExpr() additiveOperator())
-        multiplicativeExpr() ( additiveOperator() multiplicativeExpr() )*
+        multiplicativeExpr() ( additiveOperator() multiplicativeExpr() )+
     |   multiplicativeExpr()
 }
 
-void boolExpr() #BoolExpr(>1) : {}
+void boolExpr() #Expr(>1) : {}
 {
     LOOKAHEAD(addExpr() booleanOperator())
         addExpr() ( booleanOperator() addExpr() )+
@@ -295,7 +295,7 @@ void unary() : {}
     |   isTileEmpty()
     |   tileAccess()
     |   primary()
-    |   <NOT> <LPAREN> expression() <RPAREN> #BoolNot
+    |   (<NOT> unary()) #BoolNot
 }
 
 void primary() : {}

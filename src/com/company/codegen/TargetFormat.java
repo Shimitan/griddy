@@ -21,4 +21,6 @@ public interface TargetFormat {
 
     String assignString(String ident, String body);
     String reAssignString(String ident, String body);
+
+    String formatPlace(String pieceIdent);
 }
