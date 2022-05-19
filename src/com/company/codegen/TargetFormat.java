@@ -1,12 +1,12 @@
 package com.company.codegen;
 
 public interface TargetFormat {
-    String formatPieceDef(String ident, PieceDef pieceDef);
-    String formatPlayerDef(PlayerDef playerDef);
-    String formatSetup(SetupStruct setupStruct);
+    String formatPieceDef(String ident, GriddyStructure.SetupStruct.PieceDef pieceDef);
+    String formatPlayerDef(GriddyStructure.SetupStruct.PlayerDef playerDef);
+    String formatSetup(GriddyStructure.SetupStruct setupStruct);
     String formatGame(String body, String winCond);
     String formatTurn(String playerPrefix, String body);
-    String format(SetupStruct setupStruct, GameStruct gameStruct);
+    String format(GriddyStructure.SetupStruct setupStruct, GriddyStructure.GameStruct gameStruct);
 
     String outputString(String body);
     String outputNumber(String body);
@@ -22,5 +22,13 @@ public interface TargetFormat {
     String assignString(String ident, String body);
     String reAssignString(String ident, String body);
 
+    String assignNumber(String ident, String body);
+    String reAssignNumber(String ident, String body);
+
+    String assignBoolean(String ident, String body);
+    String reAssignBoolean(String ident, String body);
+
     String formatPlace(String pieceIdent);
+
+    String formatLogicalOperator(String token);
 }

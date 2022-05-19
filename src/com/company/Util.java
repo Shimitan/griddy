@@ -107,19 +107,9 @@ public class Util {
                         -h, --help                  =>  Display help message.
                         -f <path>, --file <path>    =>  Set input filepath (required).
                         -o <path>, --output <path>  =>  Set output filepath.
-                        -t <target>, --target <target>  =>  Set compilation target (default = C).
-                        -c, --compile               =>  Compile output with gcc (target: C).
+                        -c, --compile               =>  Compile output with gcc.
                         --tree                      =>  Dump AST to stdout.
-                        
-                    Compilation targets:
-                        C   =>  C kode compatible with GCC version 11.
-                        JS  =>  JavaScript for usage with Node.js.
                     """);
-            return;
-        }
-
-        if (flags.compile && flags.target != Target.C) {
-            System.out.println("Wrong usage: '-c/--compile' option only valid for 'C' target.");
             return;
         }
 
@@ -129,10 +119,10 @@ public class Util {
         try {
             inputStream = new FileInputStream(flags.file);
 
-            Griddy.main(flags.target, flags.tree, inputStream, output);
+            Griddy.main(flags.tree, inputStream, output);
             File outFile = new File(flags.output != null
                     ? flags.output
-                    : (flags.target != Target.JS  ? flags.file+".c" : flags.file+".js"));
+                    : flags.file+".c");
 
             if (outFile.createNewFile()) System.out.println("File '" + outFile.getName() + "' successfully created!");
 
@@ -174,7 +164,6 @@ public class Util {
         String file = null;
         String output = null;
         boolean tree = false;
-        Target target = Target.C;
         boolean compile = false;
     }
 
@@ -205,16 +194,6 @@ public class Util {
 
                 if(i+2 <= args.length)
                     cli(args, flags, i+1);
-            }
-            case "-t", "--target" -> {
-                if (args[i+1].equalsIgnoreCase("c")){
-                    flags.target = Target.C;
-                }else if(args[i+1].equalsIgnoreCase("js")){
-                    flags.target = Target.JS;
-                }
-
-                if(i+3 <= args.length)
-                    cli(args, flags, i+2);
             }
             case "-c", "--compile" -> {
                 flags.compile = true;

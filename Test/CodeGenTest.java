@@ -12,7 +12,7 @@ public class CodeGenTest {
     @Test
     void pieceDef() {
         Object[] moves = { new Object() };
-        var pd = new PieceDef("x_piece", "X", 3, Arrays.stream(moves).toList(), formatter);
+        var pd = new GriddyStructure.SetupStruct.PieceDef("x_piece", "X", 3, Arrays.stream(moves).toList(), formatter);
         var expected = """
                 .x_piece.name = calloc(2, sizeof(char));
                 strcpy(.x_piece.name, "X");
@@ -25,11 +25,11 @@ public class CodeGenTest {
 
     @Test
     void playerDef() {
-        var pldef = new PlayerDef(formatter);
+        var pldef = new GriddyStructure.SetupStruct.PlayerDef(formatter);
 
         Object[] moves = { new Object() };
-        pldef.addPiece("x_piece", new PieceDef("x_piece", "X", 3, Arrays.stream(moves).toList(), formatter));
-        pldef.addPiece("y_piece", new PieceDef("y_piece", "Y", 3, Arrays.stream(moves).toList(), formatter));
+        pldef.addPiece("x_piece", new GriddyStructure.SetupStruct.PieceDef("x_piece", "X", 3, Arrays.stream(moves).toList(), formatter));
+        pldef.addPiece("y_piece", new GriddyStructure.SetupStruct.PieceDef("y_piece", "Y", 3, Arrays.stream(moves).toList(), formatter));
 
         var expected = """
                 struct Player {
