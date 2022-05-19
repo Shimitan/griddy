@@ -90,8 +90,8 @@ TOKEN : {
     |   < NOT:  "!"     >   // 'not' / 'negate'
     |   < LT:   "<"     >   // 'less than'
     |   < GT:   ">"     >   // 'greater than'
-    |   < AND:  "&&"    >   // logical 'and'
-    |   < OR:   "||"    >   // logical 'or'
+    |   < AND:  "and"    >   // logical 'and'
+    |   < OR:   "or"    >   // logical 'or'
     |   < PLUS: "+"     >   // addition
     |   < MINUS:"-"     >   // subtraction
     |   < MULT: "*"     >   // multiplication
@@ -154,7 +154,7 @@ void setupStmt() : {}
 
 void gamePhase() #Game : {}
 {
-    <GAME_MAIN> unary()
+    <GAME_MAIN> <LPAREN> expression() <RPAREN>
     ( gameStmt() )*
 }
 
@@ -171,7 +171,7 @@ void gameStmt() : {}
 
 void placeStmt() #Place : {}
 {
-    <PLACE> ( LOOKAHEAD(2) getPiece() | identifier() ) <AT> position()
+    <PLACE> identifier()
 }
 
 ASTPosition position() #Position : { }
@@ -198,7 +198,7 @@ ASTPiece pieceDeclaration() #Piece :
             props.put((String) k.jjtGetValue(), v);
             jjtThis.jjtSetValue(props);
         }
-    )+
+    )*
     <END>
     { jjtThis.jjtSetValue(props); return jjtThis; }
 }
@@ -227,7 +227,23 @@ ASTEmpty empty() #Empty :
 
 void expression() #Expr(>1) : {}
 {
-    multiplicativeExpr() ( ( additiveOperator() | booleanOperator() ) multiplicativeExpr() )?
+    LOOKAHEAD(boolExpr() logicalOperator())
+        boolExpr() ( logicalOperator() boolExpr() )+
+    |   boolExpr()
+}
+
+void addExpr() #Expr(>1) : {}
+{
+    LOOKAHEAD(multiplicativeExpr() additiveOperator())
+        multiplicativeExpr() ( additiveOperator() multiplicativeExpr() )+
+    |   multiplicativeExpr()
+}
+
+void boolExpr() #Expr(>1) : {}
+{
+    LOOKAHEAD(addExpr() booleanOperator())
+        addExpr() ( booleanOperator() addExpr() )+
+    |   addExpr()
 }
 
 ASTOperator additiveOperator() #Operator :
@@ -242,9 +258,23 @@ ASTOperator additiveOperator() #Operator :
     }
 }
 
+ASTOperator logicalOperator() #Operator :
+{
+    Token t;
+}
+{
+    ( t=<OR> | t=<AND> )
+    {
+        jjtThis.jjtSetValue(t.image);
+        return jjtThis;
+    }
+}
+
 void multiplicativeExpr() #Expr(>1) : {}
 {
-    unary() ( multiplicativeOperator() unary() )?
+    LOOKAHEAD(unary() multiplicativeOperator())
+        unary() ( multiplicativeOperator() unary() )+
+    |   unary()
 }
 
 ASTOperator multiplicativeOperator() #Operator :
@@ -262,10 +292,10 @@ ASTOperator multiplicativeOperator() #Operator :
 void unary() : {}
 {
         <LPAREN> expression() <RPAREN>
-    |   ( <NOT> unary() ) #BoolNot
     |   isTileEmpty()
     |   tileAccess()
     |   primary()
+    |   (<NOT> unary()) #BoolNot
 }
 
 void primary() : {}
@@ -289,9 +319,8 @@ ASTOperator booleanOperator() #Operator :
     |  t=<GEQ>
     |  t=<LT>
     |  t=<GT>
-    |  t=<OR>
-    |  t=<AND>
     )
+
     {
         jjtThis.jjtSetValue(t.image);
         return jjtThis;

@@ -30,7 +30,7 @@ public class CVisitor extends GriddyDefaultVisitor {
     Function<String, String> getGriddyGlobalType = k -> switch (k) {
         case "@player_one", "@player_two" -> "Player";
         case "@board" -> "Board";
-        case "@win_condition" -> "int";
+        case "@win_condition", "@turn_count" -> "Integer";
         default -> throw new RuntimeException("Unknown identifier: '" + k + "'");
     };
 
@@ -229,7 +229,19 @@ public class CVisitor extends GriddyDefaultVisitor {
 
     @Override
     public Object visit(ASTOperator node, Object data) {
-        return ((StringBuilder) data).append(node.jjtGetValue());
+        var op = node.jjtGetValue().toString();
+        return ((StringBuilder) data)
+                .append(switch (op) {
+                    case "and" -> "&&";
+                    case "or" -> "||";
+                    case ">=" -> ">=";
+                    case "<=" -> "<=";
+                    case "==" -> "==";
+                    case "!=" -> "!=";
+                    case "<" -> "<";
+                    case ">" -> ">";
+                    default -> throw new RuntimeException("Unknown logical operator: " + op);
+                });
     }
 
     @Override
@@ -260,26 +272,9 @@ public class CVisitor extends GriddyDefaultVisitor {
 
     @Override
     public Object visit(ASTPlace node, Object data) {
-        var out = (StringBuilder) data;
-        var piece = node.jjtGetChild(0);
-        var pos = node.jjtGetChild(1);
+        var ident = node.jjtGetChild(0).jjtGetValue().toString();
 
-        out.append("if (");
-        piece.jjtAccept(this, data);
-        out.append(".count < ");
-        piece.jjtAccept(this, data);
-        out.append(".limit) {\n");
-        out.append("_board[");
-        pos.jjtGetChild(1).jjtAccept(this, data);   //  Y
-        out.append("-1][");
-        pos.jjtGetChild(0).jjtAccept(this, data);   //  X
-        out.append("-1] = &");
-        piece.jjtAccept(this, data);
-        out.append(";\n");
-        piece.jjtAccept(this, data);
-        out.append(".count++;\n}\n");
-
-        return data;
+        return ((StringBuilder) data).append(targetFormat.formatPlace(ident));
     }
 
     @Override
@@ -305,7 +300,7 @@ public class CVisitor extends GriddyDefaultVisitor {
         return data;
     }
   
-    public Object visit(ASTInput node, Object data){
+    public Object visit(ASTInput node, Object data) throws RuntimeException{
         var output = (StringBuilder) data;
         var arg = node.jjtGetChild(0);
 
@@ -316,17 +311,6 @@ public class CVisitor extends GriddyDefaultVisitor {
                 output.append("scanf(\"%d\", &");
                 arg.jjtAccept(this, data);
                 yield output.append(");\n");
-            }
-            case "String" -> {
-                output.append("scanf(\"%s\", &");
-                arg.jjtAccept(this, data);
-                yield output.append(");\n");
-            }
-            case "Piece", "Access" -> {
-                output.append("scanf(\"%s\", &");
-                arg.jjtAccept(this, data);
-                yield output.append(".name")
-                        .append(");\n");
             }
             default -> throw new RuntimeException("Can't scan value of unknown type: " + argType);
         };

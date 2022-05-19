@@ -43,7 +43,11 @@ fun ask_for_number ()
     end
 return "Hello"
 
-GAME (false) #( (50 > user_input) || (user_input > 100) )
+#min = 50 > user_input;
+
+#max = user_input > 100;
+
+GAME !(50 > user_input)
     output @board;
 
     p_one = tile (3, 3);
@@ -54,3 +58,4 @@ GAME (false) #( (50 > user_input) || (user_input > 100) )
     output p_one == p_two;
 
     #output ask_for_number();
+
