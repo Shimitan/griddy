@@ -15,7 +15,7 @@ A programming language for board games.
 sh build.sh
 
 # Compile to binary
-java -cp output com.company.Main --file examples/tic_tac_toe.griddy --compile
+java -cp output com.company.Main --file examples/noughts_and_crosses.griddy --compile
 
 # Run binary
 ./a.out

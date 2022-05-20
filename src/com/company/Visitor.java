@@ -1,4 +1,4 @@
-package com.company.target;
+package com.company;
 
 import com.company.codegen.*;
 import com.company.parser.*;
@@ -6,15 +6,11 @@ import com.company.parser.*;
 import java.util.*;
 import java.util.function.Function;
 
-import com.company.Util;
-
 /**
  * Griddy visitor for C targets.
  */
-public class CVisitor extends GriddyDefaultVisitor {
-
+public class Visitor extends GriddyDefaultVisitor {
     TargetFormat targetFormat = new TargetC();
-
     GriddyStructure generator = new GriddyStructure(targetFormat);
 
     Function<String, String> getGriddyGlobal = k -> switch (k) {
@@ -30,7 +26,10 @@ public class CVisitor extends GriddyDefaultVisitor {
     Function<String, String> getGriddyGlobalType = k -> switch (k) {
         case "@player_one", "@player_two" -> "Player";
         case "@board" -> "Board";
-        case "@win_condition", "@turn_count" -> "Integer";
+        case "@win_condition" -> "Boolean";
+        case "@turn_count" -> "Integer";
+        case "@placeable", "@capture", "@can_jump" -> "MetaBoolean";
+        case "@limit" -> "MetaInteger";
         default -> throw new RuntimeException("Unknown identifier: '" + k + "'");
     };
 
@@ -86,7 +85,6 @@ public class CVisitor extends GriddyDefaultVisitor {
             case "Boolean" -> arg.jjtGetValue().toString().equals("true") ? "1" : "0";
             default -> null;
         };
-
 
         return switch (argType) {
             case "Integer", "Boolean" -> output.append(targetFormat.outputNumber(value));
@@ -146,9 +144,19 @@ public class CVisitor extends GriddyDefaultVisitor {
         String valueType = GriddyTreeConstants.jjtNodeName[valueNode.getId()];
 
         if (ident.startsWith("@")) {
-            ident = getGriddyGlobal.apply(ident);
+            switch (ident) {
+                case "@can_jump" ->
+                    GriddyStructure.SetupStruct.PresetGlobals.canJump = value.toString().equals("true");
+                case "@limit" ->
+                    GriddyStructure.SetupStruct.PresetGlobals.limit = (int) value;
+                case "@placeable" ->
+                    GriddyStructure.SetupStruct.PresetGlobals.placeable = value.toString().equals("true");
+                case "@capture" ->
+                    GriddyStructure.SetupStruct.PresetGlobals.capture = value.toString().equals("true");
+                default -> throw new RuntimeException("Unable to assign a value to global: " + ident);
+            }
+            return data;
         }
-
 
         if (valueType.equals("Ident")) {
             if (value.toString().startsWith("@")) {
@@ -166,11 +174,8 @@ public class CVisitor extends GriddyDefaultVisitor {
                 case "String" -> output.append(targetFormat.reAssignString(ident, value.toString()));
                 // Integer values 0 and >0 used in C boolean expressions instead of bool literals.
                 // 1. var_name = int_val;
-                case "Integer", "Boolean", "Expr" -> output
-                        .append(ident)
-                        .append(" = ")
-                        .append(value)
-                        .append(";\n");
+                case "Integer", "Expr" -> output.append(targetFormat.reAssignNumber(ident, value.toString()));
+                case "Boolean" -> output.append(targetFormat.reAssignBoolean(ident, value.toString()));
                 default -> throw new RuntimeException("Encountered invalid value type in assignment: " + valueType);
             };
 
@@ -179,20 +184,9 @@ public class CVisitor extends GriddyDefaultVisitor {
         value = tmp.toString();
 
         return switch (valueType) {
-            // 1. char *str_ptr;
-            // 2. str_ptr = calloc(str_size, sizeof(char));
-            // 3. strcpy(str_ptr, str_val);
             case "String" -> output.append(targetFormat.assignString(ident, value.toString()));
-
-            // Integer values 0 and >0 used in C boolean expressions instead of bool literals.
-            // 1. int var_name = int_value;
-            case "Integer", "Boolean", "Expr" -> output
-                    .append("int ")
-                    .append(ident)
-                    .append(" = ")
-                    .append(value)
-                    .append(";\n");
-
+            case "Integer", "Expr" -> output.append(targetFormat.assignNumber(ident, value.toString()));
+            case "Boolean" -> output.append(targetFormat.assignBoolean(ident, value.toString()));
             case "Empty" -> {
                 valueNode.jjtAccept(this, data);
                 identNode.jjtAccept(this, data);
@@ -217,31 +211,10 @@ public class CVisitor extends GriddyDefaultVisitor {
     }
 
     @Override
-    public Object visit(ASTEmpty node, Object data) {
-        var type = (String) node.jjtGetValue();
-
-        return ((StringBuilder) data).append(switch (type) {
-            case "number", "boolean" -> "int ";
-            case "string" -> "char *";
-            default -> throw new RuntimeException("Unknown type in empty assignment: '" + type + "'");
-        });
-    }
-
-    @Override
     public Object visit(ASTOperator node, Object data) {
         var op = node.jjtGetValue().toString();
         return ((StringBuilder) data)
-                .append(switch (op) {
-                    case "and" -> "&&";
-                    case "or" -> "||";
-                    case ">=" -> ">=";
-                    case "<=" -> "<=";
-                    case "==" -> "==";
-                    case "!=" -> "!=";
-                    case "<" -> "<";
-                    case ">" -> ">";
-                    default -> throw new RuntimeException("Unknown logical operator: " + op);
-                });
+                .append(targetFormat.formatLogicalOperator(op));
     }
 
     @Override
@@ -283,17 +256,26 @@ public class CVisitor extends GriddyDefaultVisitor {
         var pieceProps = (HashMap<String, Node>) node.jjtGetValue();
 
         var ident = node.jjtGetChild(0).jjtGetValue().toString();
+        GriddyStructure.SetupStruct.PieceDef pieceDef = new GriddyStructure.SetupStruct.PieceDef(ident, targetFormat);
+
         Node limitNode = pieceProps.get("limit");
-        int limit = limitNode == null ? Integer.MAX_VALUE : (Integer) limitNode.jjtGetValue();
-        Object[] moveset = { new Object() };
-        Node startPos = pieceProps.get("StartPosition");
+        if (limitNode != null) pieceDef.pieceProps.limit = (Integer) limitNode.jjtGetValue();
 
-        PieceDef pieceDef = new PieceDef(ident, ident, limit, List.of(moveset), targetFormat);
+        Node captureNode = pieceProps.get("capture");
+        if (captureNode != null) pieceDef.pieceProps.capture = captureNode.jjtGetValue().toString().equals("true");
 
-        if (startPos != null) pieceDef.setStartPos(
-                (Integer) startPos.jjtGetChild(0).jjtGetValue(),
-                (Integer) startPos.jjtGetChild(1).jjtGetValue()
-        );
+        Node startPos = pieceProps.get("start_position");
+        if (startPos != null)
+            for (Node n : startPos.getChildren()) pieceDef.addStartPos(
+                (Integer) n.jjtGetChild(0).jjtGetValue(),
+                (Integer) n.jjtGetChild(1).jjtGetValue()
+            );
+
+        Node placeableNode = pieceProps.get("placeable");
+        if (placeableNode != null) pieceDef.pieceProps.placeable = placeableNode.jjtGetValue().toString().equals("true");
+
+        Node canJumpNode = pieceProps.get("can_jump");
+        if (canJumpNode != null) pieceDef.pieceProps.canJump = canJumpNode.jjtGetValue().toString().equals("true");
 
         generator.setupStruct.addPiece(pieceDef);
 

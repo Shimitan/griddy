@@ -6,32 +6,26 @@ options {
     VISITOR = true;
     LOOKAHEAD = 1;
     NODE_DEFAULT_VOID = true;
-    JDK_VERSION = "17.0";
     STATIC = false;
 }
 
 PARSER_BEGIN(Griddy)
 package com.company;
 
-import java.util.ArrayList;
-import java.io.InputStream;import java.util.HashMap;
-import com.company.target.*;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import com.company.parser.GriddyVisitor;
 
 public class Griddy {
-    Target target = Target.C;
-    public static void main(Target target, boolean tree, InputStream input, StringBuilder output) {
+    public static void main(boolean tree, InputStream input, StringBuilder output) {
         Griddy parser = new Griddy(input);
 
         try {
             ASTStart n = parser.Start();
             if (tree) n.dump("");
             else {
-                GriddyVisitor v;
-                switch(target){
-                    case JS : v = new JSVisitor(); break;
-                    default : v = new CVisitor(); break;
-                }
+                GriddyVisitor v = new Visitor();
                 n.jjtAccept(v, output);
             }
         } catch (Exception e) {
@@ -41,7 +35,6 @@ public class Griddy {
         }
     }
 }
-
 PARSER_END(Griddy)
 
 /* Whitespace characters */
@@ -62,21 +55,17 @@ TOKEN : {
         < IF:   "if"    >   // if statement
     |   < ELSE: "else"  >   // else statement
     |   < FROM: "from"  >   // get piece 'from' player 'piece from @player1'
-    |   < ON:   "on"    >   // value exist on board, e.g. 'game_piece on my_board'
-    |   < AT:   "at"    >
     |   < IN:   "in"    >   // e.g. 'for x in iterable'
     |   < FOR:  "for"   >   // for loop begin
     |   < END:  "end"   >   // block end
     |   < OUTPUT: "output"  >   // prints the output
     |   < INPUT: "input"    >   // scans the user input
     |   < GAME_MAIN:    "GAME"  >   // game phase begin
-    |   < FUNC_DECL:    "fun"   >   // function declaration
-    |   < RETURN:   "return"    >
+    |   < FUNC_DECL:    "fun"   >   // function return
+    |   < RETURN:   "return"    >   // function return statement
     |   < BOARD_DECL:   "board" >   // board declaration token, e.g. 'board (n,m)'
     |   < PIECE_DECL:   "piece" >   // game piece declaration token, e.g. 'piece { ...props }'
-    |   < GET:  "get"   >
     |   < PLACE: "place"    >   // place pieces on a board
-    |   < NULL: "empty" >
     |   < TILE: "tile"  >
     |   < IS_EMPTY: "empty?"    >
 }
@@ -97,14 +86,7 @@ TOKEN : {
     |   < MULT: "*"     >   // multiplication
     |   < DIV:  "/"     >   // division
     |   < MOD:  "%"     >   // modulus
-    |   < INCR:  "++"   >   // increment
-    |   < DECR:  "--"   >   // decrement
     |   < ASSIGN: "="   >   // variable assigment
-    |   < PLUS_ASSIGN:  "+="    >   // add and assign
-    |   < MINUS_ASSIGN: "-="    >   // subtract and assign
-    |   < MULT_ASSIGN:  "*="    >   // multiply and assign
-    |   < DIV_ASSIGN:   "/="    >   // divide and assign
-    |   < DOT:      "." >   // dot (struct property access maybe?)
     |   < COMMA:    "," >   // seperator comma
     |   < SEMICOLON: ";">   // statement endings
     |   < COLON:    ":" >   // property assignment
@@ -174,7 +156,7 @@ void placeStmt() #Place : {}
     <PLACE> identifier()
 }
 
-ASTPosition position() #Position : { }
+ASTPosition position() #Position : {}
 {
     <LPAREN> ( number() | identifier() ) <COMMA> ( number() | identifier() ) <RPAREN>
     { return jjtThis; }
@@ -185,15 +167,20 @@ void boardDeclaration() #Board : {}
     <BOARD_DECL> position()
 }
 
-ASTPiece pieceDeclaration() #Piece :
+ASTPosList positionList() #PosList : {}
 {
-    HashMap<String, Node> props = new HashMap<String, Node>();
+    position() ( <COMMA> position() )*
+    { return jjtThis; }
+}
+
+ASTPiece pieceDeclaration() #Piece : {
+    HashMap<String, Node> props = new LinkedHashMap<String, Node>();
 }
 {
     <PIECE_DECL> identifier()
     (
         { Node k, v; }
-        k=identifier() <COLON> ( v=number() | v=stringLiteral() | v=position() | v=bool() )
+        k=identifier() <COLON> ( v=number() | v=stringLiteral() | v=positionList() | v=bool() )
         {
             props.put((String) k.jjtGetValue(), v);
             jjtThis.jjtSetValue(props);
@@ -205,24 +192,7 @@ ASTPiece pieceDeclaration() #Piece :
 
 void assignment() #Assign : {}
 {
-    identifier() <ASSIGN>
-    (   LOOKAHEAD( functionCall() )
-        functionCall()
-    |   expression()
-    |   empty()
-    )
-}
-
-ASTEmpty empty() #Empty :
-{
-    Token t;
-}
-{
-    <NULL> t=<IDENT>
-    {
-        jjtThis.jjtSetValue(t.image);
-        return jjtThis;
-    }
+    identifier() <ASSIGN> expression()
 }
 
 void expression() #Expr(>1) : {}
@@ -246,10 +216,7 @@ void boolExpr() #Expr(>1) : {}
     |   addExpr()
 }
 
-ASTOperator additiveOperator() #Operator :
-{
-    Token t;
-}
+ASTOperator additiveOperator() #Operator : { Token t; }
 {
     ( t=<PLUS> | t=<MINUS> )
     {
@@ -258,10 +225,7 @@ ASTOperator additiveOperator() #Operator :
     }
 }
 
-ASTOperator logicalOperator() #Operator :
-{
-    Token t;
-}
+ASTOperator logicalOperator() #Operator : { Token t; }
 {
     ( t=<OR> | t=<AND> )
     {
@@ -277,10 +241,7 @@ void multiplicativeExpr() #Expr(>1) : {}
     |   unary()
 }
 
-ASTOperator multiplicativeOperator() #Operator :
-{
-    Token t;
-}
+ASTOperator multiplicativeOperator() #Operator : { Token t; }
 {
     (t=<MULT> | t=<DIV> | t=<MOD>)
     {
@@ -308,29 +269,21 @@ void primary() : {}
     |   stringLiteral()
 }
 
-ASTOperator booleanOperator() #Operator :
-{
-    Token t;
-}
+ASTOperator booleanOperator() #Operator : { Token t; }
 {
     (  t=<EQ>
     |  t=<NEQ>
     |  t=<LEQ>
     |  t=<GEQ>
     |  t=<LT>
-    |  t=<GT>
-    )
-
+    |  t=<GT> )
     {
         jjtThis.jjtSetValue(t.image);
         return jjtThis;
     }
 }
 
-ASTIdent identifier() #Ident :
-{
-    Token t;
-}
+ASTIdent identifier() #Ident : { Token t; }
 {
     t=<IDENT>
     {
@@ -339,10 +292,7 @@ ASTIdent identifier() #Ident :
     }
 }
 
-ASTInteger number() #Integer :
-{
-    Token t;
-}
+ASTInteger number() #Integer : { Token t; }
 {
     ( t=<NUM> | t=<NEG_NUM> )
     {
@@ -351,10 +301,7 @@ ASTInteger number() #Integer :
     }
 }
 
-ASTBoolean bool() #Boolean :
-{
-    Token t;
-}
+ASTBoolean bool() #Boolean : { Token t; }
 {
     t=<BOOL>
     {
@@ -363,10 +310,7 @@ ASTBoolean bool() #Boolean :
     }
 }
 
-ASTString stringLiteral() #String :
-{
-    Token t;
-}
+ASTString stringLiteral() #String : { Token t; }
 {
     t=<STRING>
     {
