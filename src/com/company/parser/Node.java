@@ -36,5 +36,5 @@ public interface Node {
   int getId();
 
   /** Accept the visitor. **/
-  Object jjtAccept(GriddyVisitor visitor, Object data);
+  StringBuilder jjtAccept(GriddyVisitor visitor, StringBuilder data);
 }

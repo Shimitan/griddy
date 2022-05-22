@@ -8,31 +8,31 @@ import java.util.Map;
 public class GriddyStructure {
     public SetupStruct setupStruct;
     public GameStruct gameStruct;
-    protected TargetFormat formatter;
+    protected OutputTemplates templates;
 
-    public GriddyStructure(TargetFormat targetFormat) {
-        formatter = targetFormat;
-        setupStruct = new SetupStruct(targetFormat);
-        gameStruct = new GameStruct(targetFormat);
+    public GriddyStructure(OutputTemplates targetTemplates) {
+        templates = targetTemplates;
+        setupStruct = new SetupStruct(targetTemplates);
+        gameStruct = new GameStruct(targetTemplates);
     }
 
     @Override
     public String toString() {
-        return formatter.format(setupStruct, gameStruct);
+        return templates.wrapper(setupStruct, gameStruct);
     }
 
     public static class GameStruct {
-        protected TargetFormat formatter;
+        protected OutputTemplates templates;
         public StringBuilder body = new StringBuilder();
         public String winCondition;
 
-        public GameStruct(TargetFormat targetFormat) {
-            formatter = targetFormat;
+        public GameStruct(OutputTemplates targetTemplates) {
+            templates = targetTemplates;
         }
 
         @Override
         public String toString() {
-            return formatter.formatGame(body.toString(), winCondition);
+            return templates.game(body.toString(), winCondition);
         }
     }
 
@@ -44,7 +44,7 @@ public class GriddyStructure {
             public static boolean canJump = false;
         }
 
-        public TargetFormat formatter;
+        public OutputTemplates templates;
         public PlayerDef playerDef;
 
         protected PieceDef[][] board;
@@ -52,9 +52,9 @@ public class GriddyStructure {
         public int boardWidth;
         public int boardHeight;
 
-        public SetupStruct(TargetFormat targetFormat) {
-            formatter = targetFormat;
-            playerDef = new PlayerDef(formatter);
+        public SetupStruct(OutputTemplates targetTemplates) {
+            templates = targetTemplates;
+            playerDef = new PlayerDef(templates);
         }
 
         public PieceDef[][] getBoard() {
@@ -70,6 +70,8 @@ public class GriddyStructure {
         public void placePiece(PieceDef p, int x, int y) {
             board[y][x] = p;
             p.pieceProps.count++;
+            if (p.pieceProps.count > p.pieceProps.limit)
+                throw new RuntimeException("Start positions for piece: " + p.pieceProps.limit);
         }
 
         public void addPiece(PieceDef pieceDef) {
@@ -100,15 +102,15 @@ public class GriddyStructure {
         @Override
         public String toString() {
             placeAllPieces();
-            return formatter.formatSetup(this);
+            return templates.setup(this);
         }
 
         public static class PlayerDef {
             protected Map<String, PieceDef> player1 = new LinkedHashMap<>();
             protected Map<String, PieceDef> player2 = new LinkedHashMap<>();
-            public TargetFormat formatter;
-            public PlayerDef(TargetFormat targetFormat) {
-                formatter = targetFormat;
+            public OutputTemplates templates;
+            public PlayerDef(OutputTemplates targetTemplates) {
+                templates = targetTemplates;
             }
 
             public void addPiece(String ident, PieceDef piece) {
@@ -123,7 +125,7 @@ public class GriddyStructure {
 
             @Override
             public String toString() {
-                return formatter.formatPlayerDef(this);
+                return templates.playerDef(this);
             }
         }
 
@@ -141,12 +143,12 @@ public class GriddyStructure {
 
             public PieceProps pieceProps = new PieceProps();
 
-            public TargetFormat formatter;
+            public OutputTemplates templates;
             public String ownerPrefix = "";
 
-            public PieceDef(String name, TargetFormat targetFormat) {
+            public PieceDef(String name, OutputTemplates targetTemplates) {
                 pieceProps.name = name;
-                formatter = targetFormat;
+                templates = targetTemplates;
             }
 
             public void addStartPos(int x, int y) {
@@ -162,7 +164,7 @@ public class GriddyStructure {
 
             @Override
             public String toString() {
-                return formatter.formatPieceDef(ownerPrefix + "." + pieceProps.name, this);
+                return templates.pieceDef(ownerPrefix + "." + pieceProps.name, this);
             }
 
             @Override

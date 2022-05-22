@@ -2,8 +2,21 @@ package com.company.codegen;
 
 import com.company.Util;
 
-public class TargetC implements TargetFormat {
-    public String formatPieceDef(String ident, GriddyStructure.SetupStruct.PieceDef pieceDef) {
+public class TargetC implements OutputTemplates {
+
+    public String typeString(String str) {
+        return "\"" + str + "\"";
+    }
+
+    public String typeNumber(int num) {
+        return "" + num;
+    }
+
+    public String typeBoolean(boolean bool) {
+        return bool ? "1" : "0";
+    }
+
+    public String pieceDef(String ident, GriddyStructure.SetupStruct.PieceDef pieceDef) {
         var displayName = pieceDef.pieceProps.name;
         return ident + ".name = calloc(" + (displayName.length() + 1) + ", sizeof(char));\n"
                 + "strcpy(" + ident + ".name, \"" + displayName + "\");\n"
@@ -15,78 +28,61 @@ public class TargetC implements TargetFormat {
                 + ident + ".player = &" + pieceDef.ownerPrefix + ";\n";
     }
 
-    public String formatPlayerDef(GriddyStructure.SetupStruct.PlayerDef playerDef) {
-        var out = new StringBuilder();
-
-        out.append("struct Player {\n");
-        playerDef.player1.forEach((k, _v) -> out.append("  struct Piece ").append(k).append(";\n"));
+    public String playerDef(GriddyStructure.SetupStruct.PlayerDef playerDef) {
+        var out = new StringBuilder("struct Player {\n");
+        playerDef.player1.forEach( (k, _v) -> out.append("struct Piece " + k + ";\n") );
         out.append("} _p1, _p2;\n");
-        playerDef.player1.forEach((_k, v) ->
-            out.append(v.toString())
-        );
-        playerDef.player2.forEach((_k, v) ->
-            out.append(v.toString())
-        );
-
+        playerDef.player1.forEach( (_k, v) -> out.append(v) );
+        playerDef.player2.forEach( (_k, v) -> out.append(v) );
         return out.toString();
     };
 
-    public String formatSetup(GriddyStructure.SetupStruct setupStruct) {
-        var out = new StringBuilder("""
+    public String setup(GriddyStructure.SetupStruct setupStruct) {
+        var out = """
                 /*    SETUP    */
-                """);
-
-        out.append(setupStruct.playerDef)
-                .append("struct Piece *_board[")
-                .append(setupStruct.boardHeight)
-                .append("][")
-                .append(setupStruct.boardWidth)
-                .append("] = {");
+                """
+                + setupStruct.playerDef.toString()
+                + "struct Piece *_board[" + setupStruct.boardHeight + "][" + setupStruct.boardWidth + "] = {";
 
         for (GriddyStructure.SetupStruct.PieceDef[] row : setupStruct.getBoard()) {
-            out.append("{");
+            out += "{";
             for (GriddyStructure.SetupStruct.PieceDef pieceDef : row)
                 if (pieceDef != null) {
-                    out.append("&")
-                            .append(pieceDef.ownerPrefix)
-                            .append(".")
-                            .append(pieceDef.pieceProps.name)
-                            .append(",");
-                } else out.append("NULL,");
+                    out += "&" + pieceDef.ownerPrefix + "." + pieceDef.pieceProps.name + ",";
+                } else out += "NULL,";
 
-            out.append("},");
+            out += "},";
         }
 
-        return out.append("};\n")
-                .append("""
-                    struct Player * _current_player;
-                    int _turn_count = 0;
-                    int _win_condition = 0;
-                    """)
-                .append(setupStruct.body.toString())
-                .toString();
+        return out + """
+                };
+                struct Player * _current_player;
+                int _turn_count = 0;
+                int _win_condition = 0;
+                """
+                + setupStruct.body.toString();
     }
 
-    public String formatGame(String body, String winCond) {
+    public String game(String body, String winCond) {
         return """
-        /*   GAME    */
-        do {
-        _current_player = _turn_count % 2 ? &_p2 : &_p1;
-        """
-        + body
-        + """
-        _win_condition"""
-        + " = "
-        + winCond
-        + ";\n"
-        + """
-        _turn_count++;
-        } while (!_win_condition);
-        
-        """;
+                /*   GAME    */
+                do {
+                _current_player = _turn_count % 2 ? &_p2 : &_p1;
+                """
+                + body
+                + """
+                _win_condition"""
+                + " = "
+                + winCond
+                + ";\n"
+                + """
+                _turn_count++;
+                } while (!_win_condition);
+                
+                """;
     }
 
-    public String format(GriddyStructure.SetupStruct setupStruct, GriddyStructure.GameStruct gameStruct) {
+    public String wrapper(GriddyStructure.SetupStruct setupStruct, GriddyStructure.GameStruct gameStruct) {
         return """
                 /* === Code generated by Griddy compiler === */
                 #include <stdio.h>
@@ -114,7 +110,7 @@ public class TargetC implements TargetFormat {
                 """;
     }
 
-    public String formatTurn(String playerPrefix, String body) {
+    public String turn(String playerPrefix, String body) {
         return "_current_player = &" + playerPrefix + ";\n" + body + "\n";
     }
 
@@ -138,9 +134,7 @@ public class TargetC implements TargetFormat {
                 if (_board[_i][_j]) {
                 if (_board[_i][_j]->player == &_p1) {
                 printf("│ \\x1b[33m\\x1b[1m%c\\x1b[0m ", *_board[_i][_j]->name);
-                } else {
-                printf("│ %c ", *_board[_i][_j]->name);
-                }
+                } else printf("│ %c ", *_board[_i][_j]->name);
                 } else printf("│   ");
                 printf("│ %d\\n", _i + 1);
                 """
@@ -150,18 +144,18 @@ public class TargetC implements TargetFormat {
     }
 
     public String condStmt(String condition, String body) {
-        return "if (" + condition + ")\n" + body;
+        return "if (" + condition + ") {\n" + body + "}\n";
     }
 
     public String condElse(String body) {
-        return "else\n" + body;
+        return "\n} else {\n" + body;
     }
 
     public String assignPieceRef(String ident, int x, int y) {
-        return "struct Piece * " + ident + " = " + formatPieceRef(x, y) + ";\n";
+        return "struct Piece * " + ident + " = " + pieceRef(x, y) + ";\n";
     }
 
-    public String formatPieceRef(int x, int y) {
+    public String pieceRef(int x, int y) {
         return "_board[" + (y - 1) + "][" + (x - 1) + "]";
     }
 
@@ -181,11 +175,11 @@ public class TargetC implements TargetFormat {
     }
 
     public String assignNumber(String ident, String body) {
-        return "int " + ident + " = " + body + ";\n";
+        return "int " + reAssignNumber(ident, body);
     }
 
     public String reAssignNumber(String ident, String body) {
-        return ident + " = " + body + ";\n";
+        return reAssignVar(ident, body);
     }
 
     public String assignBoolean(String ident, String body) {
@@ -196,7 +190,7 @@ public class TargetC implements TargetFormat {
         return reAssignNumber(ident, body);
     }
 
-    public String formatLogicalOperator(String token) {
+    public String logicalOperator(String token) {
         return switch (token) {
             case "and" -> "&&";
             case "or" -> "||";
@@ -210,7 +204,7 @@ public class TargetC implements TargetFormat {
         };
     }
 
-    public String formatPlace(String pieceIdent) {
+    public String place(String pieceIdent) {
         return """
                 char _place_arg_x;
                 int _place_arg_y;
@@ -230,5 +224,13 @@ public class TargetC implements TargetFormat {
                 goto PLACE_INPUT;
                 }
                 """;
+    }
+
+    public String tile(int x, int y) {
+        return "_board[" + (y - 1) + "][" + (x - 1) + "]";
+    }
+
+    public String unaryNot(String body) {
+        return "!(" + body + ")";
     }
 }

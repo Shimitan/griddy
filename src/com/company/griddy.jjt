@@ -7,6 +7,8 @@ options {
     LOOKAHEAD = 1;
     NODE_DEFAULT_VOID = true;
     STATIC = false;
+    VISITOR_DATA_TYPE = "StringBuilder";
+    VISITOR_RETURN_TYPE = "StringBuilder";
 }
 
 PARSER_BEGIN(Griddy)
