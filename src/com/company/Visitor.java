@@ -2,116 +2,69 @@ package com.company;
 
 import com.company.codegen.*;
 import com.company.parser.*;
+import com.company.codegen.GriddyStructure.SetupStruct;
 
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Griddy visitor for C targets.
  */
 public class Visitor extends GriddyDefaultVisitor {
-    TargetFormat targetFormat = new TargetC();
-    GriddyStructure generator = new GriddyStructure(targetFormat);
-
-    Function<String, String> getGriddyGlobal = k -> switch (k) {
-            case "@player_one" -> "&_p1";
-            case "@player_two" -> "&_p2";
-            case "@board" -> "_board";
-            case "@current_player" -> "_current_player";
-            case "@turn_count" -> "_turn_count";
-            case "@win_condition" -> "_win_condition";
-            default -> throw new RuntimeException("Unknown identifier: '" + k + "'");
-    };
-
-    Function<String, String> getGriddyGlobalType = k -> switch (k) {
-        case "@player_one", "@player_two" -> "Player";
-        case "@board" -> "Board";
-        case "@win_condition" -> "Boolean";
-        case "@turn_count" -> "Integer";
-        case "@placeable", "@capture", "@can_jump" -> "MetaBoolean";
-        case "@limit" -> "MetaInteger";
-        default -> throw new RuntimeException("Unknown identifier: '" + k + "'");
-    };
-
-    /** Throw error in case a base AST node is encountered. */
-    @Override
-    public Object visit(SimpleNode node, Object data){
-        throw new RuntimeException("Encountered SimpleNode");
-    }
+    OutputTemplates templates = new TargetC();
+    GriddyStructure generator = new GriddyStructure(templates);
 
     /** Root */
-    @Override
-    public Object visit(ASTStart node, Object data){
-        var output = (StringBuilder) data;
-
+    public StringBuilder visit(ASTStart node, StringBuilder data){
         node.childrenAccept(this, generator.setupStruct.body);
-
-        return output.append(generator);
+        return data.append(generator);
     }
 
     /**
      * {@code output} print statement, which maps to C's {@code printf}.
      * */
-    @Override
-    public Object visit(ASTOutput node, Object data) {
-        var output = (StringBuilder) data;
+    public StringBuilder visit(ASTOutput node, StringBuilder data) {
         var arg = node.jjtGetChild(0);
-
         String argType = GriddyTreeConstants.jjtNodeName[arg.getId()];
         String value = switch (argType) {
             case "FuncCall" -> {
-                var retNode = arg.jjtGetChild(0);
-                var val = retNode.jjtGetValue().toString();
+                var val = arg.jjtGetChild(0).jjtGetValue().toString();
                 argType = Util.getFunctionReturnType(node, val);
                 yield val + "()";
             }
-            case "String" -> "\"" + arg.jjtGetValue() + "\"";
+            case "String" -> templates.typeString(arg.jjtGetValue().toString());
             case "Ident" -> {
                 var val = arg.jjtGetValue().toString();
-
                 if (val.startsWith("_")) {
-                    argType = getGriddyGlobalType.apply(val.replaceFirst("_", "@"));
-                    yield getGriddyGlobal.apply(val);
+                    argType = Util.getGriddyGlobalType.apply(val.replaceFirst("_", "@"));
+                    yield Util.getGriddyGlobal.apply(val);
                 }
-
                 if (val.startsWith("@")) {
-                    argType = getGriddyGlobalType.apply(val);
-                    yield getGriddyGlobal.apply(val);
+                    argType = Util.getGriddyGlobalType.apply(val);
+                    yield Util.getGriddyGlobal.apply(val);
                 }
-
                 argType = Util.getIdentifierType(node, val);
                 yield val;
             }
-            case "Boolean" -> arg.jjtGetValue().toString().equals("true") ? "1" : "0";
+            case "Boolean" -> templates.typeBoolean("true".equals(arg.jjtGetValue().toString()));
             default -> null;
         };
 
-        return switch (argType) {
-            case "Integer", "Boolean" -> output.append(targetFormat.outputNumber(value));
-            case "Expr" -> {
-                output.append("printf(\"%d\\n\", ");
-                arg.jjtAccept(this, output);
-                yield output.append(");\n");
-            }
-            case "String" -> output.append(targetFormat.outputString(value));
-            case "Tile" -> output
-                    .append("printf(\"%s\\n\", ")
-                    .append(value).append("->name")
-                    .append(");\n");
-            case "Board" -> output.append(targetFormat.outputTable(
-                    value,
+        return data.append(switch (argType) {
+            case "Integer", "Boolean" -> templates.outputNumber(value);
+            case "Expr" -> templates.outputNumber(arg.jjtAccept(this, new StringBuilder()).toString());
+            case "String" -> templates.outputString(value);
+            case "Tile" -> templates.outputString(value + "->name");
+            case "Board" -> templates.outputTable(value,
                     generator.setupStruct.boardWidth,
                     generator.setupStruct.boardHeight
-            ));
+            );
             default -> throw new RuntimeException("Can't echo value of unknown type: " + argType);
-        };
+        });
     }
 
-    @Override
-    public Object visit(ASTGame node, Object data){
-        var winCond = new StringBuilder();
-        node.jjtGetChild(0).jjtAccept(this, winCond);
-        generator.gameStruct.winCondition = winCond.toString();
+    public StringBuilder visit(ASTGame node, StringBuilder data){
+        var winCond = node.jjtGetChild(0).jjtAccept(this, new StringBuilder()).toString();
+        generator.gameStruct.winCondition = winCond;
 
         for (int i = 1; i < node.getNumChildren(); i++)
             node.jjtGetChild(i).jjtAccept(this, generator.gameStruct.body);
@@ -119,7 +72,7 @@ public class Visitor extends GriddyDefaultVisitor {
         return data;
     }
 
-    public Object visit(ASTBoard node, Object data){
+    public StringBuilder visit(ASTBoard node, StringBuilder data){
         var boardSize = (ASTPosition) node.jjtGetChild(0);
         generator.setupStruct.initBoard(
                 generator.setupStruct.boardWidth = (int) boardSize.jjtGetChild(0).jjtGetValue(),
@@ -133,10 +86,7 @@ public class Visitor extends GriddyDefaultVisitor {
      * <br>
      * Example: {@code my_var = 42}.
      */
-    @Override
-    public Object visit(ASTAssign node, Object data) {
-        var output = (StringBuilder) data;
-
+    public StringBuilder visit(ASTAssign node, StringBuilder data) {
         Node identNode = node.jjtGetChild(0);
         Node valueNode = node.jjtGetChild(1);
         String ident = identNode.jjtGetValue().toString();
@@ -158,105 +108,78 @@ public class Visitor extends GriddyDefaultVisitor {
             return data;
         }
 
-        if (valueType.equals("Ident")) {
+        if (valueType.equals("Ident"))
             if (value.toString().startsWith("@")) {
-                value = getGriddyGlobal.apply(value.toString());
-            } else {
-                valueType = Util.getIdentifierType(node, value.toString());
-            }
-        }
+                value = Util.getGriddyGlobal.apply(value.toString());
+            } else valueType = Util.getIdentifierType(node, value.toString());
 
         // Generate code based on whether the identifier being assigned, has already been declared or not:
         if (Util.isDeclaredInScope(identNode, ident))
-            return switch (valueType) {
-                // 1. str_ptr = realloc(str_ptr, str_size);
-                // 2. strcpy(str_ptr, str_val);
-                case "String" -> output.append(targetFormat.reAssignString(ident, value.toString()));
-                // Integer values 0 and >0 used in C boolean expressions instead of bool literals.
-                // 1. var_name = int_val;
-                case "Integer", "Expr" -> output.append(targetFormat.reAssignNumber(ident, value.toString()));
-                case "Boolean" -> output.append(targetFormat.reAssignBoolean(ident, value.toString()));
+            return data.append(switch (valueType) {
+                case "String" -> templates.reAssignString(ident, value.toString());
+                case "Integer", "Expr" -> templates.reAssignNumber(ident, value.toString());
+                case "Boolean" -> templates.reAssignBoolean(ident, value.toString());
                 default -> throw new RuntimeException("Encountered invalid value type in assignment: " + valueType);
-            };
+            });
 
-        var tmp = new StringBuilder();
-        valueNode.jjtAccept(this, tmp);
-        value = tmp.toString();
+        value = valueNode.jjtAccept(this, new StringBuilder()).toString();
 
-        return switch (valueType) {
-            case "String" -> output.append(targetFormat.assignString(ident, value.toString()));
-            case "Integer", "Expr" -> output.append(targetFormat.assignNumber(ident, value.toString()));
-            case "Boolean" -> output.append(targetFormat.assignBoolean(ident, value.toString()));
-            case "Empty" -> {
-                valueNode.jjtAccept(this, data);
-                identNode.jjtAccept(this, data);
-                yield output.append(";\n");
-            }
-            case "Tile" -> output.append(targetFormat.assignPieceRef(
-                    ident,
+        return data.append(switch (valueType) {
+            case "String" -> templates.assignString(ident, value.toString());
+            case "Integer", "Expr" -> templates.assignNumber(ident, value.toString());
+            case "Boolean" -> templates.assignBoolean(ident, value.toString());
+            case "Tile" -> templates.assignPieceRef(ident,
                     (int)valueNode.jjtGetChild(0).jjtGetChild(0).jjtGetValue(),
                     (int)valueNode.jjtGetChild(0).jjtGetChild(1).jjtGetValue()
-            ));
+            );
             default -> throw new RuntimeException("Encountered invalid value type in assignment: " + valueNode);
-        };
+        });
     }
 
-    @Override
-    public Object visit(ASTExpr node, Object data) {
-        var output = (StringBuilder) data;
-        output.append("(");
+    public StringBuilder visit(ASTExpr node, StringBuilder data) {
+        data.append("(");
         for (Node c : node.getChildren())
             c.jjtAccept(this, data);
-        return output.append(")");
+        return data.append(")");
     }
 
-    @Override
-    public Object visit(ASTOperator node, Object data) {
+    public StringBuilder visit(ASTOperator node, StringBuilder data) {
         var op = node.jjtGetValue().toString();
-        return ((StringBuilder) data)
-                .append(targetFormat.formatLogicalOperator(op));
+        return data.append(templates.logicalOperator(op));
     }
 
-    @Override
-    public Object visit(ASTString node, Object data) {
-        return ((StringBuilder) data)
-                .append("\"")
-                .append(node.jjtGetValue())
-                .append("\"");
+    public StringBuilder visit(ASTString node, StringBuilder data) {
+        return data.append(templates.typeString(node.jjtGetValue().toString()));
     }
 
-    @Override
-    public Object visit(ASTIdent node, Object data) {
+    public StringBuilder visit(ASTIdent node, StringBuilder data) {
         var ident = node.jjtGetValue().toString();
-        if (ident.startsWith("@")) ident = getGriddyGlobal.apply(ident);
+        if (ident.startsWith("@")) ident = Util.getGriddyGlobal.apply(ident);
 
-        return ((StringBuilder) data).append(ident);
+        return data.append(ident);
     }
 
-    @Override
-    public Object visit(ASTInteger node, Object data) {
-        return ((StringBuilder) data).append(node.jjtGetValue());
+    public StringBuilder visit(ASTInteger node, StringBuilder data) {
+        return data.append(node.jjtGetValue());
     }
 
-    @Override
-    public Object visit(ASTBoolean node, Object data) {
-        return ((StringBuilder) data).append("true".equals(node.jjtGetValue()) ? 1 : 0);
+    public StringBuilder visit(ASTBoolean node, StringBuilder data) {
+        return data.append(templates.typeBoolean(
+                "true".equals(node.jjtGetValue())
+        ));
     }
 
-    @Override
-    public Object visit(ASTPlace node, Object data) {
+    public StringBuilder visit(ASTPlace node, StringBuilder data) {
         var ident = node.jjtGetChild(0).jjtGetValue().toString();
-
-        return ((StringBuilder) data).append(targetFormat.formatPlace(ident));
+        return data.append(templates.place(ident));
     }
 
-    @Override
-    public Object visit(ASTPiece node, Object data) {
+    public StringBuilder visit(ASTPiece node, StringBuilder data) {
         @SuppressWarnings("unchecked")
         var pieceProps = (HashMap<String, Node>) node.jjtGetValue();
 
         var ident = node.jjtGetChild(0).jjtGetValue().toString();
-        GriddyStructure.SetupStruct.PieceDef pieceDef = new GriddyStructure.SetupStruct.PieceDef(ident, targetFormat);
+        GriddyStructure.SetupStruct.PieceDef pieceDef = new GriddyStructure.SetupStruct.PieceDef(ident, templates);
 
         Node limitNode = pieceProps.get("limit");
         if (limitNode != null) pieceDef.pieceProps.limit = (Integer) limitNode.jjtGetValue();
@@ -282,58 +205,34 @@ public class Visitor extends GriddyDefaultVisitor {
         return data;
     }
   
-    public Object visit(ASTInput node, Object data) throws RuntimeException{
-        var output = (StringBuilder) data;
+    public StringBuilder visit(ASTInput node, StringBuilder data) throws RuntimeException {
         var arg = node.jjtGetChild(0);
-
         String argType = Util.getIdentifierType(node, arg.jjtGetValue().toString());
         
-        return switch (argType) {
-            case "Integer", "Expr", "Boolean" -> {
-                output.append("scanf(\"%d\", &");
-                arg.jjtAccept(this, data);
-                yield output.append(");\n");
-            }
+        return data.append(switch (argType) {
+            case "Integer", "Expr", "Boolean" -> "scanf(\"%d\", &" + arg.jjtAccept(this, new StringBuilder()).toString() + ");\n";
             default -> throw new RuntimeException("Can't scan value of unknown type: " + argType);
-        };
+        });
     }
 
-    @Override
-    public Object visit(ASTCondStmt node, Object data) {
-        var out = (StringBuilder) data;
-        var ifCond = (StringBuilder) node.jjtGetChild(0).jjtAccept(this, new StringBuilder());
+    public StringBuilder visit(ASTCondStmt node, StringBuilder data) {
+        var ifCond = node.jjtGetChild(0).jjtAccept(this, new StringBuilder());
         var body = new StringBuilder();
         var multiStmt = node.getNumChildren() > 2 && !node.jjtGetChild(2).toString().equals("CondElse");
 
-        if (multiStmt) body.append("{\n");
-        node.jjtGetChild(1).jjtAccept(this, body);
-        for (int i = 2; i < node.getNumChildren(); i++) {
-            var c = node.jjtGetChild(i);
-            if (c.toString().equals("CondElse") && multiStmt) {
-                body.append("}\n");
-                multiStmt = false;
-            }
-            c.jjtAccept(this, body);
+        for (int i = 1; i < node.getNumChildren(); i++) {
+            node.jjtGetChild(i).jjtAccept(this, body);
         }
-        if (multiStmt) body.append("}\n");
 
-        return out.append(targetFormat.condStmt(ifCond.toString(), body.toString()));
+        return data.append(templates.condStmt(ifCond.toString(), body.toString()));
     }
 
-    @Override
-    public Object visit(ASTCondElse node, Object data) {
-        var body = new StringBuilder();
-
-        if (node.getNumChildren() > 1) body.append("{\n");
-        node.childrenAccept(this, body);
-        if (node.getNumChildren() > 1) body.append("}\n");
-
-        return ((StringBuilder) data)
-                .append(targetFormat.condElse(body.toString()));
+    public StringBuilder visit(ASTCondElse node, StringBuilder data) {
+        var body = node.childrenAccept(this, new StringBuilder());
+        return data.append(templates.condElse(body.toString()));
     }
 
-    @Override
-    public Object visit(ASTFuncDecl node, Object data) {
+    public StringBuilder visit(ASTFuncDecl node, StringBuilder data) {
         var body = new StringBuilder();
         Node retNode = node.jjtGetChild(3);
         String retType = GriddyTreeConstants.jjtNodeName[retNode.getId()];
@@ -347,71 +246,49 @@ public class Visitor extends GriddyDefaultVisitor {
             case "Integer", "Boolean" -> "int ";
             default -> throw new RuntimeException("Unknown return type: " + retType);
         }).append(node.jjtGetChild(0).jjtGetValue())
-                .append("(").append(") {\n");
+                .append("() {\n");
 
         node.jjtGetChild(2).jjtAccept(this, body);
         body.append("return ");
         retNode.jjtAccept(this, body);
         body.append(";\n}\n");
 
-        return ((StringBuilder) data).append(body);
+        return data.append(body);
+    }
+    
+    public StringBuilder visit(ASTFuncCall node, StringBuilder data) {
+        return node.jjtGetChild(0).jjtAccept(this, data).append("()");
     }
 
-    @Override
-    public Object visit(ASTFuncCall node, Object data) {
-        var out = (StringBuilder) data;
-        node.jjtGetChild(0).jjtAccept(this, data);
-
-        return out.append("()");
+    public StringBuilder visit(ASTStmt node, StringBuilder data) {
+        return node.jjtGetChild(0).jjtAccept(this, data).append(";\n");
     }
 
-    @Override
-    public Object visit(ASTStmt node, Object data) {
-        node.jjtGetChild(0).jjtAccept(this, data);
-        return ((StringBuilder) data).append(";\n");
-    }
-
-    @Override
-    public Object visit(ASTGetPiece node, Object data) {
-        var output = (StringBuilder) data;
-
+    public StringBuilder visit(ASTGetPiece node, StringBuilder data) {
         var pieceIdent = node.jjtGetChild(0);
         var player = node.jjtGetChild(1);
-
-        player.jjtAccept(this, output);
-        output.append("->");
-        return pieceIdent.jjtAccept(this, output);
+        player.jjtAccept(this, data).append("->");
+        return pieceIdent.jjtAccept(this, data);
     }
 
-    @Override
-    public Object visit(ASTTileEmpty node, Object data) {
-        var output = (StringBuilder) data;
+    public StringBuilder visit(ASTTileEmpty node, StringBuilder data) {
         var pos = (ASTPosition) node.jjtGetChild(0);
-
-        output.append("_board[");
-        pos.jjtGetChild(1).jjtAccept(this, data);
-        output.append("-1][");
-        pos.jjtGetChild(0).jjtAccept(this, data);
-        return output.append("-1] == NULL");
+        int x = (int) pos.jjtGetChild(0).jjtGetValue();
+        int y = (int) pos.jjtGetChild(1).jjtGetValue();
+        return data.append(templates.tile(x, y))
+                .append("== NULL");
     }
 
-    @Override
-    public Object visit(ASTTile node, Object data) {
-        var output = (StringBuilder) data;
+    public StringBuilder visit(ASTTile node, StringBuilder data) {
         var pos = (ASTPosition) node.jjtGetChild(0);
-
-        output.append("_board[");
-        pos.jjtGetChild(1).jjtAccept(this, data);
-        output.append("-1][");
-        pos.jjtGetChild(0).jjtAccept(this, data);
-        return output.append("-1]");
+        int x = (int) pos.jjtGetChild(0).jjtGetValue();
+        int y = (int) pos.jjtGetChild(1).jjtGetValue();
+        return data.append(templates.tile(x, y));
     }
 
-    @Override
-    public Object visit(ASTBoolNot node, Object data) {
-        var output = (StringBuilder) data;
-        output.append("!(");
-        node.jjtGetChild(0).jjtAccept(this, data);
-        return output.append(")");
+    public StringBuilder visit(ASTBoolNot node, StringBuilder data) {
+        return data.append(templates.unaryNot(
+                node.jjtGetChild(0).jjtAccept(this, new StringBuilder()).toString()
+        ));
     }
 }

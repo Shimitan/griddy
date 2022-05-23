@@ -56,13 +56,13 @@ class SimpleNode implements Node {
   public Object jjtGetValue() { return this.value; }
 
   /** Accept the visitor. **/
-  public Object jjtAccept(GriddyVisitor visitor, Object data)
+  public StringBuilder jjtAccept(GriddyVisitor visitor, StringBuilder data)
 {
     return visitor.visit(this, data);
   }
 
   /** Accept the visitor. **/
-  public Object childrenAccept(GriddyVisitor visitor, Object data)
+  public StringBuilder childrenAccept(GriddyVisitor visitor, StringBuilder data)
 {
     if (this.children != null) {
       for (Node child : this.children) {

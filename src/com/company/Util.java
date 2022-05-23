@@ -7,6 +7,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import java.util.function.Function;
 
 public class Util {
     public static final class ANSI {
@@ -215,5 +216,25 @@ public class Util {
 
         return arr;
     }
+
+    public static Function<String, String> getGriddyGlobal = k -> switch (k) {
+        case "@player_one" -> "&_p1";
+        case "@player_two" -> "&_p2";
+        case "@board" -> "_board";
+        case "@current_player" -> "_current_player";
+        case "@turn_count" -> "_turn_count";
+        case "@win_condition" -> "_win_condition";
+        default -> throw new RuntimeException("Unknown identifier: '" + k + "'");
+    };
+
+    public static Function<String, String> getGriddyGlobalType = k -> switch (k) {
+        case "@player_one", "@player_two" -> "Player";
+        case "@board" -> "Board";
+        case "@win_condition" -> "Boolean";
+        case "@turn_count" -> "Integer";
+        case "@placeable", "@capture", "@can_jump" -> "MetaBoolean";
+        case "@limit" -> "MetaInteger";
+        default -> throw new RuntimeException("Unknown identifier: '" + k + "'");
+    };
 }
 
