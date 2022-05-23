@@ -110,10 +110,6 @@ public class TargetC implements OutputTemplates {
                 """;
     }
 
-    public String turn(String playerPrefix, String body) {
-        return "_current_player = &" + playerPrefix + ";\n" + body + "\n";
-    }
-
     public String outputString(String body) {
         return "printf(\"%s\\n\", " + body + ");\n";
     }
@@ -122,7 +118,7 @@ public class TargetC implements OutputTemplates {
         return "printf(\"%d\\n\", " + body + ");\n";
     }
 
-    public String outputTable(String ident, int w, int h) {
+    public String outputTable(int w, int h) {
         var letterRow = new StringBuilder();
         for (int n : Util.range(1, w))
             letterRow.append("  ").append((char)('a' + n - 1)).append(" ");
@@ -214,9 +210,9 @@ public class TargetC implements OutputTemplates {
                 int _in;
                 while ((_in = getchar()) != EOF && _in != '\\n');
                 """
-                + "if (_current_player->" + pieceIdent + ".placeable && _current_player->" + pieceIdent
-                + ".count < _current_player->" + pieceIdent + ".limit && _board[_place_arg_y - 1][_place_arg_x - ((int)'a')] == NULL) {\n"
-                + "_board[_place_arg_y - 1][_place_arg_x - ((int)'a')] = &_current_player->" + pieceIdent + ";\n"
+                + "if (_current_player->" + pieceIdent + ".placeable&&_current_player->" + pieceIdent
+                + ".count<_current_player->" + pieceIdent + ".limit&&_board[_place_arg_y-1][_place_arg_x-((int)'a')]==NULL){\n"
+                + "_board[_place_arg_y-1][_place_arg_x-((int)'a')]=&_current_player->" + pieceIdent + ";\n"
                 + "_current_player->" + pieceIdent + ".count++;\n"
                 + """
                 } else {

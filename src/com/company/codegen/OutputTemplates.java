@@ -1,16 +1,17 @@
 package com.company.codegen;
 
+import com.company.codegen.GriddyStructure.*;
+
 public interface OutputTemplates {
-    String pieceDef(String ident, GriddyStructure.SetupStruct.PieceDef pieceDef);
-    String playerDef(GriddyStructure.SetupStruct.PlayerDef playerDef);
-    String setup(GriddyStructure.SetupStruct setupStruct);
+    String pieceDef(String ident, SetupStruct.PieceDef pieceDef);
+    String playerDef(SetupStruct.PlayerDef playerDef);
+    String setup(SetupStruct setupStruct);
     String game(String body, String winCond);
-    String turn(String playerPrefix, String body);
-    String wrapper(GriddyStructure.SetupStruct setupStruct, GriddyStructure.GameStruct gameStruct);
+    String wrapper(SetupStruct setupStruct, GameStruct gameStruct);
 
     String outputString(String body);
     String outputNumber(String body);
-    String outputTable(String ident, int w, int h);
+    String outputTable(int w, int h);
 
     String condStmt(String condition, String body);
     String condElse(String body);
