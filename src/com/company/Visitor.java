@@ -54,7 +54,7 @@ public class Visitor extends GriddyDefaultVisitor {
             case "Expr" -> templates.outputNumber(arg.jjtAccept(this, new StringBuilder()).toString());
             case "String" -> templates.outputString(value);
             case "Tile" -> templates.outputString(value + "->name");
-            case "Board" -> templates.outputTable(value,
+            case "Board" -> templates.outputTable(
                     generator.setupStruct.boardWidth,
                     generator.setupStruct.boardHeight
             );
@@ -96,13 +96,13 @@ public class Visitor extends GriddyDefaultVisitor {
         if (ident.startsWith("@")) {
             switch (ident) {
                 case "@can_jump" ->
-                    GriddyStructure.SetupStruct.PresetGlobals.canJump = value.toString().equals("true");
+                    SetupStruct.PresetGlobals.canJump = value.toString().equals("true");
                 case "@limit" ->
-                    GriddyStructure.SetupStruct.PresetGlobals.limit = (int) value;
+                    SetupStruct.PresetGlobals.limit = (int) value;
                 case "@placeable" ->
-                    GriddyStructure.SetupStruct.PresetGlobals.placeable = value.toString().equals("true");
+                    SetupStruct.PresetGlobals.placeable = value.toString().equals("true");
                 case "@capture" ->
-                    GriddyStructure.SetupStruct.PresetGlobals.capture = value.toString().equals("true");
+                    SetupStruct.PresetGlobals.capture = value.toString().equals("true");
                 default -> throw new RuntimeException("Unable to assign a value to global: " + ident);
             }
             return data;

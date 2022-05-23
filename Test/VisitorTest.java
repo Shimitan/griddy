@@ -14,23 +14,31 @@ public class VisitorTest {
             #include <stdio.h>
             #include <stdlib.h>
             #include <string.h>
+            #include <stdbool.h>
             
             int main(int argc, char *argv[]){
-            struct Piece { char* name; unsigned int limit; unsigned int count; };
-            
+            struct Piece {
+            char* name;
+            unsigned int limit;
+            unsigned int count;
+            bool placeable;
+            bool capture;
+            bool can_jump;
+            struct Player* player;
+            };
             """,
             setupHeader = "/*    SETUP    */\n",
             gameHeader = "/*   GAME    */\n";
 
     String gameLoop(String body) {
         return """
-                struct Player _current_player;
-                int _turn_count = 0;
                 do {
+                _current_player = _turn_count % 2 ? &_p2 : &_p1;
                 """
                 + body
                 + """
-                } while (0);
+                _turn_count++;
+                } while (!_win_condition);
                 
                 return 0;
                 }
@@ -38,128 +46,112 @@ public class VisitorTest {
     }
 
     @Test
-    void outputString() {
+    void variableAssignment() {
         var input = """
-                board (3,3);
-                GAME
-                    output "Hello, World!";
+                board(1,1);
+                a = 42;
+                GAME(false)
                 """;
-        var expected = outHeader
+        var expected =
+                outHeader
                 + setupHeader
                 + """
                 struct Player {
                 } _p1, _p2;
-                struct Piece *_board[3][3] = {{NULL,NULL,NULL,},{NULL,NULL,NULL,},{NULL,NULL,NULL,},};
-                                
-                """
-                + gameHeader
-                + gameLoop("printf(\"%s\\n\", \"Hello, World!\");\n");
-
-        var sb = new StringBuilder();
-        InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-        Griddy.main(Target.C, false, inputStream, sb);
-
-        assertEquals(expected, sb.toString());
-    }
-
-    @Test
-    void outputNumber() {
-        var input = """
-                board (3,3);
-                GAME
-                    output 42;
-                """;
-        var expected = outHeader
-                + setupHeader
-                + """
-                struct Player {
-                } _p1, _p2;
-                struct Piece *_board[3][3] = {{NULL,NULL,NULL,},{NULL,NULL,NULL,},{NULL,NULL,NULL,},};
-
-                """
-                + gameHeader
-                + gameLoop("printf(\"%d\\n\", 42);\n");
-
-        var sb = new StringBuilder();
-        InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-        Griddy.main(Target.C, false, inputStream, sb);
-
-        assertEquals(expected, sb.toString());
-    }
-
-    @Test
-    void outputBoolean() {
-        var input = """
-                board (3,3);
-                GAME
-                    output true;
-                """;
-        var expected = outHeader
-                + setupHeader
-                + """
-                struct Player {
-                } _p1, _p2;
-                struct Piece *_board[3][3] = {{NULL,NULL,NULL,},{NULL,NULL,NULL,},{NULL,NULL,NULL,},};
+                struct Piece *_board[1][1] = {{NULL,},};
+                struct Player * _current_player;
+                int _turn_count = 0;
+                int _win_condition = 0;
+                int a = 42;
                 
                 """
                 + gameHeader
-                + gameLoop("printf(\"%d\\n\", 1);\n");
+                + gameLoop("_win_condition = 0;\n");
 
-        var sb = new StringBuilder();
+        var output = new StringBuilder();
         InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-        Griddy.main(Target.C, false, inputStream, sb);
+        Griddy.main(false, inputStream, output);
 
-        assertEquals(expected, sb.toString());
+        assertEquals(expected, output.toString());
     }
 
     @Test
-    void pieceDef() {
+    void variableReassignment() {
         var input = """
-                board (3,3);
-                piece x_piece
-                    name: "X"
-                    limit: 3
-                end
-                piece y_piece
-                    name: "Y"
-                    limit: 3
-                end
-                GAME
+                board(1,1);
+                a = 42;
+                a = 21;
+                GAME(false)
                 """;
-
-        var expected = outHeader
+        var expected =
+                outHeader
                 + setupHeader
                 + """
                 struct Player {
-                  struct Piece x_piece;
-                  struct Piece y_piece;
                 } _p1, _p2;
-                _p1.x_piece.name = calloc(2, sizeof(char));
-                strcpy(_p1.x_piece.name, "X");
-                _p1.x_piece.limit = 3;
-                _p1.x_piece.count = 0;
-                _p1.y_piece.name = calloc(2, sizeof(char));
-                strcpy(_p1.y_piece.name, "Y");
-                _p1.y_piece.limit = 3;
-                _p1.y_piece.count = 0;
-                _p2.x_piece.name = calloc(2, sizeof(char));
-                strcpy(_p2.x_piece.name, "X");
-                _p2.x_piece.limit = 3;
-                _p2.x_piece.count = 0;
-                _p2.y_piece.name = calloc(2, sizeof(char));
-                strcpy(_p2.y_piece.name, "Y");
-                _p2.y_piece.limit = 3;
-                _p2.y_piece.count = 0;
-                struct Piece *_board[3][3] = {{NULL,NULL,NULL,},{NULL,NULL,NULL,},{NULL,NULL,NULL,},};
+                struct Piece *_board[1][1] = {{NULL,},};
+                struct Player * _current_player;
+                int _turn_count = 0;
+                int _win_condition = 0;
+                int a = 42;
+                a = 21;
                 
                 """
                 + gameHeader
-                + gameLoop("");
+                + gameLoop("_win_condition = 0;\n");
 
-        var sb = new StringBuilder();
+        var output = new StringBuilder();
         InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-        Griddy.main(Target.C, false, inputStream, sb);
+        Griddy.main(false, inputStream, output);
 
-        assertEquals(expected, sb.toString());
+        assertEquals(expected, output.toString());
+    }
+
+    @Test
+    void pieceDeclaration() {
+        var input = """
+                board(2,2);
+                piece p
+                    start_position: (1,1), (2,1)
+                end
+                GAME(false)
+                """;
+        var expected =
+                outHeader
+                + setupHeader
+                + """
+                struct Player {
+                struct Piece p;
+                } _p1, _p2;
+                _p1.p.name = calloc(2, sizeof(char));
+                strcpy(_p1.p.name, "p");
+                _p1.p.limit = 2147483647;
+                _p1.p.count = 2;
+                _p1.p.capture = 0;
+                _p1.p.can_jump = 0;
+                _p1.p.placeable = 1;
+                _p1.p.player = &_p1;
+                _p2.p.name = calloc(2, sizeof(char));
+                strcpy(_p2.p.name, "p");
+                _p2.p.limit = 2147483647;
+                _p2.p.count = 2;
+                _p2.p.capture = 0;
+                _p2.p.can_jump = 0;
+                _p2.p.placeable = 1;
+                _p2.p.player = &_p2;
+                struct Piece *_board[2][2] = {{&_p1.p,&_p1.p,},{&_p2.p,&_p2.p,},};
+                struct Player * _current_player;
+                int _turn_count = 0;
+                int _win_condition = 0;
+                
+                """
+                + gameHeader
+                + gameLoop("_win_condition = 0;\n");
+
+        var output = new StringBuilder();
+        InputStream inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
+        Griddy.main(false, inputStream, output);
+
+        assertEquals(expected, output.toString());
     }
 }
