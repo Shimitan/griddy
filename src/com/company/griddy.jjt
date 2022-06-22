@@ -6,26 +6,28 @@ options {
     VISITOR = true;
     LOOKAHEAD = 1;
     NODE_DEFAULT_VOID = true;
+    STATIC = false;
+    VISITOR_DATA_TYPE = "StringBuilder";
+    VISITOR_RETURN_TYPE = "StringBuilder";
 }
 
 PARSER_BEGIN(Griddy)
 package com.company;
 
-import java.util.ArrayList;
 import java.io.InputStream;
-import com.company.target.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import com.company.parser.GriddyVisitor;
 
 public class Griddy {
-    Target target = Target.C;
-    public static void main(Target target, boolean tree, InputStream input, StringBuilder output) {
+    public static void main(boolean tree, InputStream input, StringBuilder output) {
         Griddy parser = new Griddy(input);
 
         try {
             ASTStart n = parser.Start();
             if (tree) n.dump("");
             else {
-                GriddyVisitor v = new CVisitor();
+                GriddyVisitor v = new Visitor();
                 n.jjtAccept(v, output);
             }
         } catch (Exception e) {
@@ -35,7 +37,6 @@ public class Griddy {
         }
     }
 }
-
 PARSER_END(Griddy)
 
 /* Whitespace characters */
@@ -55,66 +56,61 @@ SPECIAL_TOKEN : {
 TOKEN : {
         < IF:   "if"    >   // if statement
     |   < ELSE: "else"  >   // else statement
-    |   < FROM: "from"  >   // get value 'from' board, e.g. '(x,y) from my_board'
-    |   < ON:   "on"    >   // value exist on board, e.g. 'game_piece on my_board'
+    |   < FROM: "from"  >   // get piece 'from' player 'piece from @player1'
     |   < IN:   "in"    >   // e.g. 'for x in iterable'
     |   < FOR:  "for"   >   // for loop begin
     |   < END:  "end"   >   // block end
     |   < OUTPUT: "output"  >   // prints the output
-    |   < GAME_SETUP:   "SETUP" >   // setup phase begin
+    |   < INPUT: "input"    >   // scans the user input
     |   < GAME_MAIN:    "GAME"  >   // game phase begin
-    |   < FUNC_DECL:    "fun"   >   // function declaration
+    |   < FUNC_DECL:    "fun"   >   // function return
+    |   < RETURN:   "return"    >   // function return statement
     |   < BOARD_DECL:   "board" >   // board declaration token, e.g. 'board (n,m)'
+    |   < PIECE_DECL:   "piece" >   // game piece declaration token, e.g. 'piece { ...props }'
+    |   < PLACE: "place"    >   // place pieces on a board
+    |   < TILE: "tile"  >
+    |   < IS_EMPTY: "empty?"    >
 }
 
 /* Punctuators */
-<DEFAULT, IN_REGEX>
 TOKEN : {
-        < EQ:   "=="    > : DEFAULT // equal
-    |   < NEQ:  "!="    > : DEFAULT // 'not equal'
-    |   < GEQ:  ">="    > : DEFAULT // 'greater than or equal to'
-    |   < LEQ:  "<="    > : DEFAULT // 'less than or equal to'
-    |   < NOT:  "!"     > : DEFAULT // 'not' / 'negate'
-    |   < LT:   "<"     > : DEFAULT // 'less than'
-    |   < GT:   ">"     > : DEFAULT // 'greater than'
-    |   < AND:  "&&"    > : DEFAULT // logical 'and'
-    |   < OR:   "||"    > : DEFAULT // logical 'or'
-    |   < PLUS: "+"     > : DEFAULT // addition
-    |   < MINUS:"-"     > : DEFAULT // subtraction
-    |   < MULT: "*"     > : DEFAULT // multiplication
-    |   < DIV:  "/"     > : DEFAULT // division
-    |   < MOD:  "%"     > : DEFAULT // modulus
-    |   < INCR:  "++"   > : DEFAULT // increment
-    |   < DECR:  "--"   > : DEFAULT // decrement
-    |   < ASSIGN: "="   > : DEFAULT // variable assigment
-    |   < PLUS_ASSIGN:  "+="    > : DEFAULT // add and assign
-    |   < MINUS_ASSIGN: "-="    > : DEFAULT // subtract and assign
-    |   < MULT_ASSIGN:  "*="    > : DEFAULT // multiply and assign
-    |   < DIV_ASSIGN:   "/="    > : DEFAULT // divide and assign
-    |   < DOT:      "." > : DEFAULT     // dot (struct property access maybe?)
-    |   < COMMA:    "," > : DEFAULT     // seperator comma
-    |   < SEMICOLON: ";"> : DEFAULT     // statement endings
-    |   < LPAREN:   "(" > : DEFAULT     // left parenthesis
-    |   < RPAREN:   ")" > : IN_REGEX    // right parenthesis
-    |   < LBRACE:   "{" > : DEFAULT     // left curly bracket
-    |   < RBRACE:   "}" > : IN_REGEX    // right curly bracket
-    |   < LBRACKET: "[" > : DEFAULT     // left square bracket
-    |   < RBRACKET: "]" > : IN_REGEX    // right square bracket
+        < EQ:   "=="    >   // equal
+    |   < NEQ:  "!="    >   // 'not equal'
+    |   < GEQ:  ">="    >   // 'greater than or equal to'
+    |   < LEQ:  "<="    >   // 'less than or equal to'
+    |   < NOT:  "!"     >   // 'not' / 'negate'
+    |   < LT:   "<"     >   // 'less than'
+    |   < GT:   ">"     >   // 'greater than'
+    |   < AND:  "and"    >   // logical 'and'
+    |   < OR:   "or"    >   // logical 'or'
+    |   < PLUS: "+"     >   // addition
+    |   < MINUS:"-"     >   // subtraction
+    |   < MULT: "*"     >   // multiplication
+    |   < DIV:  "/"     >   // division
+    |   < MOD:  "%"     >   // modulus
+    |   < ASSIGN: "="   >   // variable assigment
+    |   < COMMA:    "," >   // seperator comma
+    |   < SEMICOLON: ";">   // statement endings
+    |   < COLON:    ":" >   // property assignment
+    |   < LPAREN:   "(" >   // left parenthesis
+    |   < RPAREN:   ")" >   // right parenthesis
+    |   < LBRACE:   "{" >   // left curly bracket
+    |   < RBRACE:   "}" >   // right curly bracket
+    |   < LBRACKET: "[" >   // left square bracket
+    |   < RBRACKET: "]" >   // right square bracket
 }
 
 /* Literals (terminals) */
-<DEFAULT, IN_REGEX>
 TOKEN : {
-        < BOOL: "true" | "false"    > : IN_REGEX
-    |   < NULL: "empty" > : DEFAULT
-    |   < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])+  > : DEFAULT
-    |   < NEG_NUM:  "-" <NUM>   > : DEFAULT
-    |   < STRING:  "\"" (~["\"","\r","\n"])* "\"" > : DEFAULT // string literal
+        < NUM:  ["0"-"9"] | ["1"-"9"] (["0"-"9"])+  >
+    |   < BOOL: "true" | "false"    >
+    |   < NEG_NUM:  "-" <NUM>   >
+    |   < STRING:  "\"" (~["\"","\r","\n"])* "\"" > // string literal
 }
 
 /* Identifier (terminals) */
 TOKEN : {
-        < IDENT:        <IDENT_PART> (<IDENT_PART>)* >
+        < IDENT:        (<LETTER> | "@") (<IDENT_PART>)* >
     |   < #IDENT_PART:  (<LETTER> | "_")+ >
     |   < #LETTER:      ["a"-"z","A"-"Z"] >
 }
@@ -127,61 +123,113 @@ ASTStart Start() #Start : {}
     { return jjtThis; }
 }
 
-void setupPhase() #Setup : {}
+void setupPhase() : {}
 {
-    <GAME_SETUP>
-    (setupStmt())*
+    ( setupStmt() )*
 }
 
 void setupStmt() : {}
 {
-        assignment() <SEMICOLON>
+        functionDeclaration()
+    |   pieceDeclaration()
+    |   assignment() <SEMICOLON>
+    |   boardDeclaration() <SEMICOLON>
 }
 
 void gamePhase() #Game : {}
 {
-    <GAME_MAIN>
-    (gameStmt())+
+    <GAME_MAIN> <LPAREN> expression() <RPAREN>
+    ( gameStmt() )*
 }
 
 void gameStmt() : {}
 {
-        assignment() <SEMICOLON>
+        LOOKAHEAD( functionCall() )
+        ( functionCall() <SEMICOLON> ) #Stmt
     |   outputStmt() <SEMICOLON>
-
+    |   assignment() <SEMICOLON>
+    |   placeStmt() <SEMICOLON>
+    |   inputStmt() <SEMICOLON>
+    |   conditionalStmt()
 }
 
-void boardDeclaration() #Board :
+void placeStmt() #Place : {}
 {
-    Token a, b;
-    ArrayList<Integer> boardSize = new ArrayList<Integer>();
+    <PLACE> identifier()
+}
+
+ASTPosition position() #Position : {}
+{
+    <LPAREN> ( number() | identifier() ) <COMMA> ( number() | identifier() ) <RPAREN>
+    { return jjtThis; }
+}
+
+void boardDeclaration() #Board : {}
+{
+    <BOARD_DECL> position()
+}
+
+ASTPosList positionList() #PosList : {}
+{
+    position() ( <COMMA> position() )*
+    { return jjtThis; }
+}
+
+ASTPiece pieceDeclaration() #Piece : {
+    HashMap<String, Node> props = new LinkedHashMap<String, Node>();
 }
 {
-    <BOARD_DECL> <LPAREN> a=<NUM> <COMMA> b=<NUM> <RPAREN>
-    {
-        boardSize.add(Integer.parseInt(a.image));
-        boardSize.add(Integer.parseInt(b.image));
-        jjtThis.jjtSetValue(boardSize);
-    }
+    <PIECE_DECL> identifier()
+    (
+        { Node k, v; }
+        k=identifier() <COLON> ( v=number() | v=stringLiteral() | v=positionList() | v=bool() )
+        {
+            props.put((String) k.jjtGetValue(), v);
+            jjtThis.jjtSetValue(props);
+        }
+    )*
+    <END>
+    { jjtThis.jjtSetValue(props); return jjtThis; }
 }
 
 void assignment() #Assign : {}
 {
-    identifier() <ASSIGN> (boardDeclaration() | additiveExpr() | stringLiteral())
+    identifier() <ASSIGN> expression()
 }
 
-
-void additiveExpr() #Expr(>1) : {}
+void expression() #Expr(>1) : {}
 {
-    multiplicativeExpr() ( additiveOperator() multiplicativeExpr() )*
+    LOOKAHEAD(boolExpr() logicalOperator())
+        boolExpr() ( logicalOperator() boolExpr() )+
+    |   boolExpr()
 }
 
-ASTOperator additiveOperator() #Operator :
+void addExpr() #Expr(>1) : {}
 {
-    Token t;
+    LOOKAHEAD(multiplicativeExpr() additiveOperator())
+        multiplicativeExpr() ( additiveOperator() multiplicativeExpr() )+
+    |   multiplicativeExpr()
 }
+
+void boolExpr() #Expr(>1) : {}
 {
-    (t=<PLUS> | t=<MINUS>)
+    LOOKAHEAD(addExpr() booleanOperator())
+        addExpr() ( booleanOperator() addExpr() )+
+    |   addExpr()
+}
+
+ASTOperator additiveOperator() #Operator : { Token t; }
+{
+    ( t=<PLUS> | t=<MINUS> )
+    {
+        jjtThis.jjtSetValue(t.image);
+        return jjtThis;
+    }
+}
+
+ASTOperator logicalOperator() #Operator : { Token t; }
+{
+    ( t=<OR> | t=<AND> )
     {
         jjtThis.jjtSetValue(t.image);
         return jjtThis;
@@ -190,13 +238,12 @@ ASTOperator additiveOperator() #Operator :
 
 void multiplicativeExpr() #Expr(>1) : {}
 {
-    unary() ( multiplicativeOperator() unary() )*
+    LOOKAHEAD(unary() multiplicativeOperator())
+        unary() ( multiplicativeOperator() unary() )+
+    |   unary()
 }
 
-ASTOperator multiplicativeOperator() #Operator :
-{
-    Token t;
-}
+ASTOperator multiplicativeOperator() #Operator : { Token t; }
 {
     (t=<MULT> | t=<DIV> | t=<MOD>)
     {
@@ -207,21 +254,38 @@ ASTOperator multiplicativeOperator() #Operator :
 
 void unary() : {}
 {
-        <LPAREN> additiveExpr() <RPAREN>
+        <LPAREN> expression() <RPAREN>
+    |   isTileEmpty()
+    |   tileAccess()
     |   primary()
-    |   identifier()
+    |   (<NOT> unary()) #BoolNot
 }
 
 void primary() : {}
 {
-        number()
+        LOOKAHEAD( functionCall() )
+        functionCall()
+    |   ( LOOKAHEAD(2) getPiece() | identifier() )
+    |   number()
     |   bool()
+    |   stringLiteral()
 }
 
-ASTIdent identifier() #Ident :
+ASTOperator booleanOperator() #Operator : { Token t; }
 {
-    Token t;
+    (  t=<EQ>
+    |  t=<NEQ>
+    |  t=<LEQ>
+    |  t=<GEQ>
+    |  t=<LT>
+    |  t=<GT> )
+    {
+        jjtThis.jjtSetValue(t.image);
+        return jjtThis;
+    }
 }
+
+ASTIdent identifier() #Ident : { Token t; }
 {
     t=<IDENT>
     {
@@ -230,22 +294,16 @@ ASTIdent identifier() #Ident :
     }
 }
 
-ASTInteger number() #Integer :
+ASTInteger number() #Integer : { Token t; }
 {
-    Token t;
-}
-{
-    t=<NUM>
+    ( t=<NUM> | t=<NEG_NUM> )
     {
         jjtThis.jjtSetValue(Integer.parseInt(t.image));
         return jjtThis;
     }
 }
 
-ASTBool bool() #Bool :
-{
-    Token t;
-}
+ASTBoolean bool() #Boolean : { Token t; }
 {
     t=<BOOL>
     {
@@ -254,10 +312,7 @@ ASTBool bool() #Bool :
     }
 }
 
-ASTString stringLiteral() #String :
-{
-    Token t;
-}
+ASTString stringLiteral() #String : { Token t; }
 {
     t=<STRING>
     {
@@ -266,10 +321,65 @@ ASTString stringLiteral() #String :
     }
 }
 
-ASTOutput outputStmt() #Output : {}
+void outputStmt() #Output : {}
 {
-    <OUTPUT> ( additiveExpr() | stringLiteral() )
-    {
-        return jjtThis;
-    }
+    <OUTPUT> expression()
+}
+
+void inputStmt() #Input : {}
+{
+    <INPUT> expression()
+}
+
+void conditionalStmt() #CondStmt : {}
+{
+    <IF> expression()
+    ( gameStmt() )+
+    ( <END> | elseBlock() )
+}
+
+void elseBlock() #CondElse : {}
+{
+        LOOKAHEAD(<ELSE> <IF>)
+        <ELSE> conditionalStmt()
+    |   <ELSE> ( gameStmt() )+ <END>
+}
+
+void functionDeclaration() #FuncDecl : {}
+{
+    <FUNC_DECL> identifier() argumentList()
+    functionBody()
+    <RETURN> expression()
+}
+
+void argumentList() #ArgList : {}
+{
+        LOOKAHEAD( <LPAREN> <RPAREN> )
+        <LPAREN> <RPAREN>
+    |   <LPAREN> identifier() ( <COMMA> identifier() )* <RPAREN>
+}
+
+void functionBody() #FuncBody : {}
+{
+    ( gameStmt() )*
+}
+
+void functionCall() #FuncCall : {}
+{
+    identifier() argumentList()
+}
+
+void tileAccess() #Tile : {}
+{
+    <TILE> position()
+}
+
+void getPiece() #GetPiece : {}
+{
+    identifier() <FROM> identifier()
+}
+
+void isTileEmpty() #TileEmpty : {}
+{
+    <IS_EMPTY> position()
 }

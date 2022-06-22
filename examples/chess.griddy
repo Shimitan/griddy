@@ -1,0 +1,29 @@
+# chess.griddy
+board (8,8);
+
+# Set default piece properties:
+@placeable = false;
+@capture = true;
+
+# Define pieces and their initial placements on the board:
+piece King
+    start_position: (5,1)
+end
+piece Queen
+    start_position: (4,1)
+end
+piece Bishop
+    start_position: (3,1), (6,1)
+end
+piece Knight
+    start_position: (2,1), (7,1)
+end
+piece Rook
+    start_position: (1,1), (8,1)
+end
+piece Pawn
+    start_position: (1,2), (2,2), (3,2), (4,2), (5,2), (6,2), (7,2), (8,2)
+end
+
+GAME (true)
+    output @board;

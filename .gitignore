@@ -35,9 +35,17 @@ src/com/company/Token.java
 src/com/company/TokenMgrError.java
 src/com/company/GriddyTokenManager.java
 src/com/company/GriddyConstants.java
+src/com/company/parser/GriddyDefaultVisitor.java
+src/com/company/parser/GriddyVisitor.java
 
 *.out
 *.exe
 
 */**/*.griddy.c
 test.c
+
+build
+gradle
+gradlew
+gradlew.bat
+.gradle/

@@ -20,7 +20,7 @@ public interface Node {
   /** This pair of methods are used to inform the node of its
     parent. */
   void jjtSetParent(Node n);
-  Node jjtGetParent();
+  Node getParent();
 
   /** This method tells the node to add its argument to the node's
     list of children.  */
@@ -31,10 +31,10 @@ public interface Node {
   Node jjtGetChild(int i);
 
   /** Return the number of children the node has. */
-  int jjtGetNumChildren();
+  int getNumChildren();
 
   int getId();
 
   /** Accept the visitor. **/
-  Object jjtAccept(GriddyVisitor visitor, Object data);
+  StringBuilder jjtAccept(GriddyVisitor visitor, StringBuilder data);
 }
